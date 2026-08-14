@@ -1,0 +1,1771 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PTR / Replacement Framework Validation — Standalone</title>
+    <style>
+      :root {
+        --c-bg: #f3f6f9;
+        --c-card: #ffffff;
+        --c-border: #d8dde6;
+        --c-text: #16325c;
+        --c-muted: #5c6b82;
+        --c-brand: #0176d3;
+        --c-brand-dark: #014486;
+        --c-pass: #2e844a;
+        --c-pass-bg: #ecf6ef;
+        --c-fail: #ba0517;
+        --c-fail-bg: #fdeceb;
+        --c-warn: #a86403;
+        --c-warn-bg: #fdf6e9;
+        --c-na: #747474;
+        --c-na-bg: #f0f0f0;
+        --c-code-bg: #1b1f24;
+        --c-code-text: #e6edf3;
+        --radius: 8px;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background: var(--c-bg);
+        color: var(--c-text);
+        font-size: 14px;
+        line-height: 1.45;
+      }
+      header.app {
+        background: linear-gradient(120deg, var(--c-brand-dark), var(--c-brand));
+        color: #fff;
+        padding: 18px 24px;
+      }
+      header.app h1 { margin: 0 0 4px; font-size: 20px; }
+      header.app p { margin: 0; opacity: 0.9; font-size: 13px; }
+      .wrap { max-width: 1280px; margin: 0 auto; padding: 20px; }
+      .card {
+        background: var(--c-card);
+        border: 1px solid var(--c-border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+        margin-bottom: 18px;
+      }
+      .card h2 {
+        margin: 0 0 12px;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .step-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px; height: 24px;
+        border-radius: 50%;
+        background: var(--c-brand);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        flex: 0 0 auto;
+      }
+      .muted { color: var(--c-muted); }
+      .small { font-size: 12px; }
+      label.fld { display: block; font-weight: 600; margin: 12px 0 4px; font-size: 13px; }
+      textarea, input[type="text"], select {
+        width: 100%;
+        border: 1px solid var(--c-border);
+        border-radius: 6px;
+        padding: 8px 10px;
+        font-size: 13px;
+        font-family: inherit;
+        background: #fff;
+        color: var(--c-text);
+      }
+      textarea {
+        font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+        font-size: 12px;
+        min-height: 90px;
+        resize: vertical;
+      }
+      .query-box {
+        position: relative;
+        background: var(--c-code-bg);
+        color: var(--c-code-text);
+        border-radius: 6px;
+        padding: 12px 12px;
+        font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        margin: 6px 0 4px;
+      }
+      .query-box .copy-btn { top: 8px; right: 8px; }
+      button {
+        cursor: pointer;
+        border: 1px solid var(--c-brand);
+        background: var(--c-brand);
+        color: #fff;
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: inherit;
+      }
+      button:hover { background: var(--c-brand-dark); }
+      button.secondary { background: #fff; color: var(--c-brand); }
+      button.secondary:hover { background: #eef4fb; }
+      button.ghost { background: transparent; border-color: var(--c-border); color: var(--c-text); }
+      button.copy-btn {
+        position: absolute;
+        padding: 3px 9px;
+        font-size: 11px;
+        background: rgba(255,255,255,0.14);
+        border-color: rgba(255,255,255,0.3);
+        color: #fff;
+      }
+      button.copy-btn:hover { background: rgba(255,255,255,0.28); }
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+      .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+      .row > div { flex: 1 1 200px; min-width: 160px; }
+      .mode-tabs { display: flex; gap: 8px; margin-bottom: 4px; }
+      .mode-tabs button {
+        flex: 1; background: #fff; color: var(--c-text);
+        border: 1px solid var(--c-border); padding: 12px;
+        text-align: left; font-weight: 600;
+      }
+      .mode-tabs button.active { background: var(--c-brand); color: #fff; border-color: var(--c-brand); }
+      .mode-tabs button .sub { display: block; font-weight: 400; font-size: 11px; opacity: 0.85; margin-top: 2px; }
+      .hidden { display: none !important; }
+      .actions { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+      .notice {
+        border-radius: 6px; padding: 10px 12px; margin: 10px 0; font-size: 13px;
+      }
+      .notice.err { background: var(--c-fail-bg); color: var(--c-fail); border: 1px solid #f5c2c0; }
+      .notice.warn { background: var(--c-warn-bg); color: var(--c-warn); border: 1px solid #f3dca4; }
+      .notice.info { background: #eaf3fc; color: var(--c-brand-dark); border: 1px solid #bcd9f5; }
+      .notice.ok { background: var(--c-pass-bg); color: var(--c-pass); border: 1px solid #b6e0c2; }
+
+      /* Summary */
+      .summary { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+      .stat {
+        flex: 1 1 130px; background: #fff; border: 1px solid var(--c-border);
+        border-radius: var(--radius); padding: 12px 14px; cursor: pointer;
+        border-left-width: 4px;
+      }
+      .stat .num { font-size: 24px; font-weight: 700; }
+      .stat .lbl { font-size: 12px; color: var(--c-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+      .stat.all { border-left-color: var(--c-brand); }
+      .stat.pass { border-left-color: var(--c-pass); }
+      .stat.fail { border-left-color: var(--c-fail); }
+      .stat.warn { border-left-color: var(--c-warn); }
+      .stat.active { box-shadow: 0 0 0 2px var(--c-brand) inset; }
+
+      table.results { width: 100%; border-collapse: collapse; }
+      table.results th, table.results td {
+        text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--c-border); vertical-align: top;
+      }
+      table.results th { background: #f6f8fb; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--c-muted); }
+      tr.main-row { cursor: pointer; }
+      tr.main-row:hover { background: #f9fbfd; }
+      .status-badge {
+        display: inline-block; padding: 2px 9px; border-radius: 10px; font-size: 12px; font-weight: 700;
+      }
+      .status-badge--pass { background: var(--c-pass-bg); color: var(--c-pass); }
+      .status-badge--fail { background: var(--c-fail-bg); color: var(--c-fail); }
+      .status-badge--warn { background: var(--c-warn-bg); color: var(--c-warn); }
+      .pill { font-size: 11px; padding: 1px 7px; border-radius: 8px; margin-right: 4px; font-weight: 600; }
+      .pill.p { background: var(--c-pass-bg); color: var(--c-pass); }
+      .pill.f { background: var(--c-fail-bg); color: var(--c-fail); }
+      .pill.w { background: var(--c-warn-bg); color: var(--c-warn); }
+      .caret { display: inline-block; width: 14px; transition: transform 0.15s; }
+      .caret.open { transform: rotate(90deg); }
+      a { color: var(--c-brand); }
+
+      /* Detail panel */
+      .detail { background: #fbfcfe; padding: 4px 4px 14px; }
+      .detail h4 { margin: 14px 6px 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--c-muted); }
+      .checks-grid { width: 100%; border-collapse: collapse; }
+      .checks-grid td { padding: 6px 10px; border-bottom: 1px dashed var(--c-border); font-size: 13px; vertical-align: top; }
+      .check-status { font-weight: 700; white-space: nowrap; }
+      .check-status--pass { color: var(--c-pass); }
+      .check-status--fail { color: var(--c-fail); }
+      .check-status--warn { color: var(--c-warn); }
+      .check-status--na { color: var(--c-na); }
+      .recfields { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; padding: 0 6px; }
+      .recfield { border: 1px solid var(--c-border); border-radius: 6px; padding: 8px 10px; background: #fff; }
+      .recfield .rf-top { display: flex; justify-content: space-between; gap: 8px; }
+      .recfield .rf-label { font-weight: 600; font-size: 13px; }
+      .rec-status { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 8px; white-space: nowrap; }
+      .rec-status--ok { background: var(--c-pass-bg); color: var(--c-pass); }
+      .rec-status--missing { background: var(--c-warn-bg); color: var(--c-warn); }
+      .recfield .rf-val { font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12px; margin: 4px 0; word-break: break-word; }
+      .recfield .rf-exp { font-size: 11px; color: var(--c-muted); }
+      .recfield .rf-src { font-size: 10px; color: var(--c-muted); text-transform: uppercase; }
+      .ent-table { width: 100%; border-collapse: collapse; margin: 0 6px; }
+      .ent-table th, .ent-table td { padding: 6px 8px; border-bottom: 1px solid var(--c-border); font-size: 12px; text-align: left; }
+      .ent-status--active { color: var(--c-pass); font-weight: 700; }
+      .ent-status--missing { color: var(--c-fail); font-weight: 700; }
+      .ent-status--other { color: var(--c-warn); font-weight: 700; }
+      .badge--pass { color: var(--c-pass); font-weight: 600; }
+      .badge--warn { color: var(--c-warn); font-weight: 600; }
+      .json-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 6px; }
+      .json-panels.single { grid-template-columns: 1fr; }
+      .json-panel { position: relative; }
+      .json-panel pre {
+        background: var(--c-code-bg); color: var(--c-code-text); border-radius: 6px;
+        padding: 12px; margin: 4px 0 0; font-size: 11px; max-height: 320px; overflow: auto;
+        white-space: pre-wrap; word-break: break-word;
+      }
+      .json-panel .copy-btn { top: 30px; right: 8px; }
+      .pager { display: flex; gap: 12px; align-items: center; justify-content: flex-end; margin-top: 12px; }
+      details.help summary { cursor: pointer; font-weight: 600; }
+      code.inline { background: #eef2f7; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+      .toast {
+        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+        background: #16325c; color: #fff; padding: 10px 18px; border-radius: 8px;
+        font-size: 13px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 50;
+      }
+      .toast.show { opacity: 1; }
+    </style>
+  </head>
+  <body>
+    <header class="app">
+      <h1>PTR / Replacement Framework Validation — Standalone</h1>
+      <p>
+        Verify that Quote Lines (before order conversion) and Order Items carry the fields &amp; JSON the
+        New&nbsp;Replacement / Refresh framework is supposed to populate. Runs entirely in your browser — paste SOQL results, get a report.
+      </p>
+    </header>
+
+    <div class="wrap">
+      <!-- How to get the data -->
+      <div class="card">
+        <details class="help">
+          <summary>How to pull the data from your org (read this first)</summary>
+          <div class="small" style="margin-top: 10px">
+            <p>This page does <strong>not</strong> connect to Salesforce. You run the SOQL below in your org, export the
+            result as JSON, and paste it here. Any of these work:</p>
+            <ul>
+              <li><strong>Salesforce CLI:</strong> <code class="inline">sf data query --query "&lt;SOQL&gt;" --json</code>
+                (copy the whole output — the page reads <code class="inline">result.records</code>).</li>
+              <li><strong>Workbench → REST Explorer / SOQL Query:</strong> run the query and copy the JSON response
+                (the page reads <code class="inline">records</code>).</li>
+              <li><strong>Developer Console / any tool</strong> that gives you an array of records.</li>
+            </ul>
+            <p>The page accepts a raw array <code class="inline">[ ... ]</code>, a <code class="inline">{ records: [...] }</code>
+            object, or the CLI's <code class="inline">{ result: { records: [...] } }</code> shape.
+            <strong>Keep the relationship sub-objects</strong> (e.g. <code class="inline">SBQQ__QuoteLine__r</code>,
+            <code class="inline">Order</code>, <code class="inline">Product2</code>) — SOQL returns them automatically.</p>
+          </div>
+        </details>
+      </div>
+
+      <!-- Mode selection -->
+      <div class="card">
+        <h2><span class="step-badge">1</span> What are you validating?</h2>
+        <div class="mode-tabs">
+          <button id="modeQuote" class="active" onclick="setMode('QUOTE')">
+            Quote Lines (pre-conversion)
+            <span class="sub">Stage 1/2 — RD &amp; field completeness on SBQQ__QuoteLine__c before it becomes an order</span>
+          </button>
+          <button id="modeOrder" onclick="setMode('ORDER')">
+            Order Items (post-conversion)
+            <span class="sub">Stage 3 — PTR on OrderItem vs Replacement_Details on the source Quote Line</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: primary query + paste -->
+      <div class="card">
+        <h2><span class="step-badge">2</span> Run the main query &amp; paste results</h2>
+        <p class="small muted" id="primaryHint"></p>
+        <div class="query-box"><button class="copy-btn" onclick="copyEl('primaryQuery')">Copy</button><span id="primaryQuery"></span></div>
+        <p class="small muted">Edit the <code class="inline">WHERE</code> filter for your scope, run it, then paste the JSON result below.</p>
+        <label class="fld" id="primaryLabel"></label>
+        <textarea id="primaryInput" placeholder="Paste the JSON result of the main query here..."></textarea>
+        <div class="actions">
+          <button onclick="parsePrimary()">Parse &amp; build lookup queries →</button>
+          <button class="ghost" onclick="loadSample()">Load sample data</button>
+        </div>
+        <div id="primaryMsg"></div>
+      </div>
+
+      <!-- Step 3: lookup queries -->
+      <div class="card hidden" id="lookupCard">
+        <h2><span class="step-badge">3</span> Run the generated lookup queries &amp; paste results</h2>
+        <p class="small muted">
+          Generated from the entitlement / order-item IDs found inside the PTR &amp; Replacement&nbsp;Details JSON.
+          If a query says "no IDs found", that lookup is not needed — leave its box empty.
+        </p>
+
+        <div id="entQueryWrap">
+          <label class="fld">Entitlement query</label>
+          <div class="query-box"><button class="copy-btn" onclick="copyEl('entQuery')">Copy</button><span id="entQuery"></span></div>
+          <label class="fld">Paste Entitlement results</label>
+          <textarea id="entInput" placeholder="Paste Entitlement query JSON..."></textarea>
+        </div>
+
+        <div id="elQueryWrap">
+          <label class="fld">Entitlement_Links__c query</label>
+          <div class="query-box"><button class="copy-btn" onclick="copyEl('elQuery')">Copy</button><span id="elQuery"></span></div>
+          <label class="fld">Paste Entitlement_Links__c results</label>
+          <textarea id="elInput" placeholder="Paste Entitlement_Links__c query JSON..."></textarea>
+        </div>
+
+        <div id="oiQueryWrap" class="hidden">
+          <label class="fld">OrderItem existence query (validates orderItemId / phantomOrderItemId references in PTR)</label>
+          <div class="query-box"><button class="copy-btn" onclick="copyEl('oiQuery')">Copy</button><span id="oiQuery"></span></div>
+          <label class="fld">Paste OrderItem-IDs results <span class="muted small">(optional — leave empty to mark those checks N/A)</span></label>
+          <textarea id="oiInput" placeholder="Paste OrderItem (Id only) query JSON..."></textarea>
+        </div>
+
+        <div id="cliQueryWrap" class="hidden">
+          <label class="fld">ContractLineItem existence query (validates Renewed / Subsumed contract lines)</label>
+          <div class="query-box"><button class="copy-btn" onclick="copyEl('cliQuery')">Copy</button><span id="cliQuery"></span></div>
+          <label class="fld">Paste ContractLineItem-IDs results <span class="muted small">(optional — format is still checked without it)</span></label>
+          <textarea id="cliInput" placeholder="Paste ContractLineItem (Id only) query JSON..."></textarea>
+        </div>
+
+        <div class="actions">
+          <button onclick="runValidation()">Run validation ▶</button>
+        </div>
+        <div id="lookupMsg"></div>
+      </div>
+
+      <!-- Results -->
+      <div class="card hidden" id="resultsCard">
+        <h2><span class="step-badge">✓</span> Validation report <span id="modeLabel" class="small muted" style="font-weight:400"></span></h2>
+        <div id="truncationMsg"></div>
+        <div class="summary">
+          <div class="stat all active" id="statAll" onclick="setStatusFilter('ALL')"><div class="num" id="numAll">0</div><div class="lbl">Scanned</div></div>
+          <div class="stat fail" id="statFail" onclick="setStatusFilter('FAIL')"><div class="num" id="numFail">0</div><div class="lbl">Fail</div></div>
+          <div class="stat warn" id="statWarn" onclick="setStatusFilter('WARN')"><div class="num" id="numWarn">0</div><div class="lbl">Warn</div></div>
+          <div class="stat pass" id="statPass" onclick="setStatusFilter('PASS')"><div class="num" id="numPass">0</div><div class="lbl">Pass</div></div>
+        </div>
+        <div class="actions" style="margin-top:0">
+          <button class="secondary" onclick="expandAll(true)">Expand all</button>
+          <button class="secondary" onclick="expandAll(false)">Collapse all</button>
+          <button class="secondary" onclick="exportCsv()">Export CSV</button>
+        </div>
+        <div id="noFiltered"></div>
+        <div style="overflow-x:auto; margin-top:12px">
+          <table class="results">
+            <thead><tr id="resultsHead"></tr></thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <span class="small muted" id="pageLabel"></span>
+          <button class="secondary" id="prevBtn" onclick="changePage(-1)">‹ Prev</button>
+          <button class="secondary" id="nextBtn" onclick="changePage(1)">Next ›</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+      /* =====================================================================
+       * PTR / Replacement Framework Validation — standalone port of the
+       * `ptrValidationReport` LWC (validationShared / quoteChecks / orderChecks
+       * / rowTransform). Validation rules are kept faithful to the deployed
+       * component; the only adaptation is that data arrives via pasted SOQL
+       * results instead of Apex queries, and OrderItem-reference validation is
+       * marked N/A when the (optional) OrderItem-IDs lookup is not provided.
+       * ===================================================================== */
+
+      // ── SOQL field lists (mirror validationShared.js) ──────────────────
+      const OI_FIELDS = [
+        "Id","OrderId","Order.OrderNumber","Order.Type","Order.Order_Sub_Type__c",
+        "Order.EffectiveDate","Order.SBQQ__Quote__c","Order.SBQQ__Quote__r.Name",
+        "Product2.Name","Product2.ProductCode","Product2.Product_Level__c",
+        "Product2.Product_Type__c","Product2.Product_Subtype__c","Quantity",
+        "SBQQ__QuoteLine__c","SBQQ__QuoteLine__r.Name",
+        "SBQQ__QuoteLine__r.Replacement_Details__c","SBQQ__QuoteLine__r.Replacement_Motion__c",
+        "SBQQ__QuoteLine__r.Arroyo_Subsumed_Old_Contract_Line_Items__c",
+        "SBQQ__QuoteLine__r.Arroyo_Subscribed_Asset_Name__c",
+        "SBQQ__QuoteLine__r.Subscribed_Asset_Name__c","SBQQ__QuoteLine__r.SubscribedAssetNames__c",
+        "SBQQ__QuoteLine__r.SubscribedAssetLookup__c",
+        "SBQQ__QuoteLine__r.Line_Type__c","SBQQ__QuoteLine__r.Quote_Line_Type__c",
+        "SBQQ__QuoteLine__r.Special_Program__c","SBQQ__QuoteLine__r.Disposition_Reason__c",
+        "SBQQ__QuoteLine__r.SBQQ__SubscriptionPricing__c","SBQQ__QuoteLine__r.SBQQ__ProductFamily__c",
+        "SBQQ__QuoteLine__r.SBQQ__Product__r.Rel_SubsAsst__c",
+        "SBQQ__QuoteLine__r.SBQQSC__RenewedContractLine__c",
+        "Product2.IsHardwareNotRequiredForHybridLicense__c","Product2.Replacement_Category__c",
+        "Previous_Transaction_Reference__c","SerialNumber__c","Previous_Contract_Line_Items__c",
+        "Program__c","Replacement_Type__c","Line_Type__c","Support_Start_Date__c","Support_End_Date__c",
+      ].join(", ");
+
+      const QLI_FIELDS = [
+        "Id","Name","SBQQ__Quote__c","SBQQ__Quote__r.Name",
+        "SBQQ__Quote__r.SBQQ__Type__c","SBQQ__Quote__r.Opportunity_Program__c",
+        "SBQQ__Product__r.Name","SBQQ__Product__r.ProductCode","SBQQ__Product__r.Product_Level__c",
+        "SBQQ__Product__r.Product_Type__c","SBQQ__Product__r.Product_Subtype__c",
+        "SBQQ__Product__r.IsHardwareNotRequiredForHybridLicense__c","SBQQ__Product__r.Replacement_Category__c",
+        "SBQQ__Product__r.Rel_SubsAsst__c",
+        "SBQQ__SubscriptionPricing__c","SBQQ__ProductFamily__c",
+        "SBQQ__Quantity__c","Replacement_Details__c","Replacement_Motion__c",
+        "Arroyo_Subsumed_Old_Contract_Line_Items__c","Arroyo_Subscribed_Asset_Name__c",
+        "Subscribed_Asset_Name__c","SubscribedAssetNames__c","SubscribedAssetLookup__c",
+        "SBQQSC__RenewedContractLine__c",
+        "Line_Type__c","Quote_Line_Type__c","Special_Program__c",
+        "Disposition_Reason__c","Support_Type__c",
+      ].join(", ");
+
+      const ENT_FIELDS = [
+        "Id","Name","Status","AssetId","Asset.Name","Asset.SerialNumber","EndDate",
+        "Terminated_Date__c","Quantity__c","Remaining_Quantity__c","Entitled_Quantity__c",
+      ].join(", ");
+
+      const EL_FIELDS = [
+        "Id","Previous_Entitlement__c","Renewed_Entitlement__c","Quantity__c",
+        "Status__c","Type__c","Renewal_Category__c",
+      ].join(", ");
+
+      // ContractLineItem key prefix (Renewed / Subsumed CLI Ids start with this).
+      const CLI_PREFIX = "811";
+
+      // ── Date formatting ────────────────────────────────────────────────
+      const DATE_FMT = new Intl.DateTimeFormat("en-US", { timeZone: "UTC", year: "numeric", month: "short", day: "numeric" });
+      function fmtDate(v) { return v ? DATE_FMT.format(new Date(v)) : "—"; }
+
+      // ── JSON parsing helpers (mirror validationShared.js) ──────────────
+      function parsePtrJson(json) {
+        if (!json) return null;
+        try {
+          const parsed = JSON.parse(json);
+          if (Array.isArray(parsed)) return parsed;
+          if (parsed && typeof parsed === "object") return [parsed];
+          return null;
+        } catch (e) { return null; }
+      }
+      function parseRdRows(json) {
+        if (!json) return null;
+        try {
+          const rd = JSON.parse(json);
+          if (!rd || !Array.isArray(rd.rowValues)) return new Map();
+          const map = new Map();
+          for (const row of rd.rowValues) {
+            if (!row.entId) continue;
+            // A single RD row may reference several entitlements via a
+            // comma-joined entId (aggregated accessory / support lines).
+            const ids = String(row.entId).split(",").map((s) => s.trim()).filter(Boolean);
+            if (ids.length <= 1) {
+              if (ids.length === 1) map.set(ids[0], row);
+            } else {
+              // Expand to one map entry per entId; flag so quantity checks (whose
+              // selectedQty is the aggregate, not per-ent) stay lenient.
+              for (const id of ids) map.set(id, Object.assign({}, row, { entId: id, _multiEnt: true }));
+            }
+          }
+          return map;
+        } catch (e) { return null; }
+      }
+
+      // ── Salesforce Id validation (mirror validationShared.js) ──────────
+      function isValidSfId(str) {
+        if (!str || typeof str !== "string") return false;
+        if (!/^[a-zA-Z0-9]+$/.test(str)) return false;
+        if (str.length === 15) return /[0-9]/.test(str);
+        if (str.length === 18) return is18CharChecksumValid(str);
+        return false;
+      }
+      function is18CharChecksumValid(id) {
+        const ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
+        let suffix = "";
+        for (let block = 0; block < 3; block++) {
+          let bits = 0;
+          for (let pos = 0; pos < 5; pos++) {
+            const c = id.charAt(block * 5 + pos);
+            if (c >= "A" && c <= "Z") bits += 1 << pos;
+          }
+          suffix += ALPHA.charAt(bits);
+        }
+        return id.substring(15, 18) === suffix;
+      }
+
+      /* =====================================================================
+       * Framework-config helpers (grounded in ReplacementQuoteLineCreation /
+       * RefreshConversionAssetValidation / Entitlement_Links rules)
+       * ===================================================================== */
+
+      // Values that mean "this line was produced by — or belongs to — the
+      // replacement/refresh framework and MUST carry replacement data".
+      const SPECIAL_PROGRAM_REPL = ["Upgrade", "Conversion", "Refresh"];
+      const DISPOSITION_REPL = ["Upgraded", "Converted", "Refreshed", "Renewing"];
+      const QUOTE_TYPES_ELIGIBLE = ["Renewal", "Renewal+Expansion", "Amendment", "Quote"];
+
+      /**
+       * A line is EXPECTED to carry Replacement_Details / motion when its
+       * Special_Program / Disposition mark it as a replacement line, or it
+       * points at a Renewed Contract Line. Returns {expected, reason}.
+       */
+      function expectedReplacement(sp, dr, renewedCli) {
+        const reasons = [];
+        if (sp && SPECIAL_PROGRAM_REPL.includes(sp)) reasons.push(`Special_Program__c = ${sp}`);
+        if (dr && DISPOSITION_REPL.includes(dr)) reasons.push(`Disposition_Reason__c = ${dr}`);
+        if (renewedCli) reasons.push("Renewed Contract Line is set");
+        return { expected: reasons.length > 0, reason: reasons.join("; ") };
+      }
+
+      /**
+       * Asset/serial requirement driven by the TARGET product config.
+       *   true  → asset REQUIRED (Scale category, or hardware required)
+       *   false → asset NOT required (hybrid license, default)
+       *   null  → unknown (product-config fields not in the pasted data)
+       */
+      function assetRequired(prod) {
+        if (!prod) return null;
+        if (prod.Replacement_Category__c === "Enterprise Data Protection - Scale") return true;
+        const hw = prod.IsHardwareNotRequiredForHybridLicense__c;
+        if (hw === false) return true;
+        if (hw === true) return false;
+        return null;
+      }
+
+      /** Split a comma-separated CLI Id field into trimmed, non-empty tokens. */
+      function parseCliIds(raw) {
+        if (!raw) return [];
+        return String(raw).split(",").map((s) => s.trim()).filter(Boolean);
+      }
+      /** A CLI Id should be a valid SF Id with the ContractLineItem (8cl) prefix. */
+      function isValidCli(id) {
+        return isValidSfId(id) && id.toLowerCase().startsWith(CLI_PREFIX);
+      }
+
+      /**
+       * Expected Entitlement_Links pairing for a line's motion, per
+       * Constants.mapProgramToRenewalCategory. Returns {type, category} or null.
+       */
+      function expectedLinkPairing(sp, dr) {
+        if (sp === "Upgrade" || dr === "Upgraded") return { type: "Upgrade", category: "Upgraded" };
+        if (sp === "Conversion" || dr === "Converted") return { type: "Conversion", category: "Converted" };
+        if (sp === "Refresh" || dr === "Refreshed") return { type: "Refresh", category: "Refreshed" };
+        if (dr === "Renewing") return { type: "Renewal", category: "Renewed" };
+        return null;
+      }
+
+      // ── Lookup map builders ────────────────────────────────────────────
+      function buildEntMap(entitlements) {
+        const map = new Map();
+        for (const e of entitlements) map.set(e.Id, e);
+        return map;
+      }
+      function buildLinkMap(entLinks) {
+        const map = new Map();
+        for (const el of entLinks) {
+          if (el.Previous_Entitlement__c) {
+            if (!map.has(el.Previous_Entitlement__c)) map.set(el.Previous_Entitlement__c, []);
+            map.get(el.Previous_Entitlement__c).push(el);
+          }
+          if (el.Renewed_Entitlement__c) {
+            if (!map.has(el.Renewed_Entitlement__c)) map.set(el.Renewed_Entitlement__c, []);
+            map.get(el.Renewed_Entitlement__c).push(el);
+          }
+        }
+        return map;
+      }
+
+      // ── ID collection from PTR / RD payloads ───────────────────────────
+      function extractIdsFromPtr(ptrJson, entIds, oiIds) {
+        const entries = parsePtrJson(ptrJson);
+        if (!entries) return;
+        for (const entry of entries) {
+          if (entry.entId && isValidSfId(entry.entId)) entIds.add(entry.entId);
+          if (entry.orderItemId && isValidSfId(entry.orderItemId)) oiIds.add(entry.orderItemId);
+          if (entry.phantomOrderItemId && isValidSfId(entry.phantomOrderItemId)) oiIds.add(entry.phantomOrderItemId);
+          if (Array.isArray(entry.relatedInactiveEntitlements)) {
+            for (const rie of entry.relatedInactiveEntitlements) {
+              if (rie.entitlementId && isValidSfId(rie.entitlementId)) entIds.add(rie.entitlementId);
+              if (rie.orderItemId && isValidSfId(rie.orderItemId)) oiIds.add(rie.orderItemId);
+            }
+          }
+        }
+      }
+      function extractIdsFromRd(rdJson, entIds) {
+        try {
+          const rd = JSON.parse(rdJson);
+          if (!rd || !Array.isArray(rd.rowValues)) return;
+          for (const row of rd.rowValues) {
+            if (row.entId) String(row.entId).split(",").map((s) => s.trim()).forEach((id) => { if (isValidSfId(id)) entIds.add(id); });
+            if (Array.isArray(row.upgradeLines)) for (const c of row.upgradeLines) if (c.childEntId && isValidSfId(c.childEntId)) entIds.add(c.childEntId);
+            if (Array.isArray(row.inactiveLines)) for (const c of row.inactiveLines) if (c.childEntId && isValidSfId(c.childEntId)) entIds.add(c.childEntId);
+          }
+        } catch (e) { /* malformed RD */ }
+      }
+
+      // ── CSS / rollup helpers ───────────────────────────────────────────
+      function statusCss(status) {
+        if (status === "FAIL") return "status-badge status-badge--fail";
+        if (status === "WARN") return "status-badge status-badge--warn";
+        return "status-badge status-badge--pass";
+      }
+      function checkStatusCss(status) {
+        if (status === "FAIL") return "check-status check-status--fail";
+        if (status === "WARN") return "check-status check-status--warn";
+        if (status === "N/A") return "check-status check-status--na";
+        return "check-status check-status--pass";
+      }
+      function rollupChecks(checks) {
+        let passCount = 0, failCount = 0, warnCount = 0;
+        for (const c of checks) {
+          if (c.status === "PASS") passCount++;
+          else if (c.status === "FAIL") failCount++;
+          else if (c.status === "WARN") warnCount++;
+        }
+        const overallStatus = failCount > 0 ? "FAIL" : warnCount > 0 ? "WARN" : "PASS";
+        return { passCount, failCount, warnCount, overallStatus };
+      }
+      function formatJson(raw) {
+        try { return raw ? JSON.stringify(JSON.parse(raw), null, 2) : "(empty)"; }
+        catch (e) { return raw || "(empty)"; }
+      }
+
+      /* =====================================================================
+       * Stage 1/2 — Quote Line checks (mirror quoteChecks.js)
+       * ===================================================================== */
+      function isRefreshLine(qli) {
+        const sp = (qli.Special_Program__c || "").toLowerCase();
+        const dr = (qli.Disposition_Reason__c || "").toLowerCase();
+        return sp.includes("refresh") || dr.includes("refresh");
+      }
+      function q_checkRdParseable(rdRaw, rdRowsByEntId, exp) {
+        if (!rdRaw) return { checkName: "Replacement Details Present", status: "FAIL",
+          detail: exp && exp.expected
+            ? `Expected replacement line (${exp.reason}) but Replacement_Details__c is NOT populated — framework did not write it`
+            : "No Replacement Details on this replacement Quote Line" };
+        if (!rdRowsByEntId) return { checkName: "Replacement Details Parseable", status: "FAIL", detail: "Replacement Details JSON could not be parsed" };
+        return { checkName: "Replacement Details Parseable", status: "PASS", detail: `${rdRowsByEntId.size} rows found` };
+      }
+      function q_checkRowCompleteness(rdRowsByEntId, hasRows) {
+        if (!hasRows) return { checkName: "Row Completeness", status: rdRowsByEntId ? "WARN" : "N/A", detail: rdRowsByEntId ? "No Replacement Details rows carry an entId to verify (e.g. new-SKU expansion target line) — entitlement-level checks skipped" : "No parseable Replacement Details" };
+        const incomplete = [];
+        for (const [entId, row] of rdRowsByEntId) {
+          const problems = [];
+          if (!entId) problems.push("missing entId");
+          if (row.selectedQty == null) problems.push("missing selectedQty");
+          if (problems.length) incomplete.push(`${entId || "(no entId)"}: ${problems.join(", ")}`);
+        }
+        return incomplete.length === 0
+          ? { checkName: "Row Completeness", status: "PASS", detail: "All RD rows have entId and selectedQty" }
+          : { checkName: "Row Completeness", status: "FAIL", detail: `Incomplete rows: ${incomplete.join("; ")}` };
+      }
+      function q_checkReplacementMotionSet(qli, exp) {
+        if (qli.Replacement_Motion__c) return { checkName: "Replacement Motion Set", status: "PASS", detail: qli.Replacement_Motion__c };
+        return { checkName: "Replacement Motion Set", status: exp && exp.expected ? "FAIL" : "WARN",
+          detail: exp && exp.expected ? "Replacement_Motion__c is blank on an expected replacement line (framework always sets it)" : "Replacement_Motion__c is blank" };
+      }
+      // ── Three asset-name field checks (each required under distinct conditions,
+      //    mirroring QuoteExtController's Error_with_Asset_Details validations) ──
+      const _filled = (v) => v != null && String(v).trim() !== "";
+
+      /** 1. Arroyo_Subscribed_Asset_Name__c — expected on New/expansion lines. */
+      function checkArroyoAssetName(line) {
+        const name = "Asset Name · Arroyo (New/expansion)";
+        if ((line.Quote_Line_Type__c || "") !== "New")
+          return { checkName: name, status: "N/A", detail: "Not a New/expansion line" };
+        if (_filled(line.Arroyo_Subscribed_Asset_Name__c))
+          return { checkName: name, status: "PASS", detail: "Arroyo_Subscribed_Asset_Name__c populated" };
+        if ((line.Special_Program__c || "") === "Replaced")
+          return { checkName: name, status: "N/A", detail: "Special_Program = Replaced — Arroyo asset name legitimately blank" };
+        return { checkName: name, status: "FAIL", detail: "New/expansion line is missing Arroyo_Subscribed_Asset_Name__c" };
+      }
+
+      /** 2. Subscribed_Asset_Name__c + SubscribedAssetNames__c — renewal related-asset products. */
+      function checkRenewalRelatedAssetName(line, prod) {
+        const name = "Asset Name · Renewal related-asset";
+        const dr = line.Disposition_Reason__c || "";
+        const rel = (prod && prod.Rel_SubsAsst__c) || "";
+        const relAsset = rel.indexOf("Renew:RelatedAsst") >= 0;
+        const applies = (line.Quote_Line_Type__c || "") === "Renewal" &&
+          (dr === "Renewing" || dr === "None" || dr === "") && relAsset;
+        if (!applies)
+          return { checkName: name, status: "N/A", detail: !relAsset
+            ? "Product Rel_SubsAsst__c does not carry Renew:RelatedAsst" : "Disposition is not Renewing/None" };
+        const miss = [];
+        if (!_filled(line.SubscribedAssetNames__c)) miss.push("SubscribedAssetNames__c");
+        if (!_filled(line.Subscribed_Asset_Name__c)) miss.push("Subscribed_Asset_Name__c");
+        return miss.length === 0
+          ? { checkName: name, status: "PASS", detail: "Both subscribed-asset-name fields populated" }
+          : { checkName: name, status: "FAIL", detail: `Product requires related asset on renewal but ${miss.join(" & ")} blank (Error_with_Asset_Details unless override)` };
+      }
+
+      /** 3. Subscribed_Asset_Name__c + SubscribedAssetNames__c — Scale fixed-price Replaced New lines. */
+      function checkScaleReplacedAssetName(line) {
+        const name = "Asset Name · Scale replaced";
+        const applies = line.SBQQ__SubscriptionPricing__c === "Fixed Price" &&
+          (line.Special_Program__c || "") === "Replaced" &&
+          (line.Quote_Line_Type__c || "") === "New" &&
+          line.SBQQ__ProductFamily__c === "Rubrik Scale";
+        if (!applies)
+          return { checkName: name, status: "N/A", detail: "Not a Fixed-Price Rubrik Scale Replaced New line" };
+        const miss = [];
+        if (!_filled(line.SubscribedAssetNames__c)) miss.push("SubscribedAssetNames__c");
+        if (!_filled(line.Subscribed_Asset_Name__c)) miss.push("Subscribed_Asset_Name__c");
+        return miss.length === 0
+          ? { checkName: name, status: "PASS", detail: "Both subscribed-asset-name fields populated" }
+          : { checkName: name, status: "FAIL", detail: `Scale replaced line missing ${miss.join(" & ")}` };
+      }
+
+      /** 4. SubscribedAssetLookup__c — Lookup→Asset, set from the source entitlement's
+       *  AssetId on asset-backed renewal lines (cleared on LOD→SaaS conversions). */
+      function checkSubscribedAssetLookup(line, entIds, entMap) {
+        const name = "Asset Lookup · Subscribed Asset";
+        const val = line.SubscribedAssetLookup__c;
+        // AssetIds of the referenced entitlements that actually carry an asset.
+        const entAssetIds = [];
+        for (const id of entIds) { const e = entMap.get(id); if (e && e.AssetId) entAssetIds.push(e.AssetId); }
+        if (_filled(val)) {
+          if (!isValidSfId(val) || !String(val).toLowerCase().startsWith("02i"))
+            return { checkName: name, status: "FAIL", detail: `SubscribedAssetLookup__c "${val}" is not a valid Asset Id` };
+          if (entAssetIds.length && entAssetIds.indexOf(val) < 0)
+            return { checkName: name, status: "WARN", detail: "SubscribedAssetLookup__c does not match any referenced entitlement's AssetId (possible mismatch)" };
+          return { checkName: name, status: "PASS", detail: entAssetIds.length ? "Asset lookup set and matches a referenced entitlement" : "Asset lookup set" };
+        }
+        if (entAssetIds.length)
+          return { checkName: name, status: "WARN", detail: "Source entitlement(s) carry an Asset but SubscribedAssetLookup__c is blank (expected on asset-backed renewals; cleared on conversions)" };
+        return { checkName: name, status: "N/A", detail: "No asset-backed entitlement to link (or entitlement data not provided)" };
+      }
+      function q_checkDispositionReasonSet(qli) {
+        return qli.Disposition_Reason__c
+          ? { checkName: "Disposition Reason Set", status: "PASS", detail: qli.Disposition_Reason__c }
+          : { checkName: "Disposition Reason Set", status: "WARN", detail: "Disposition_Reason__c is blank" };
+      }
+      function q_checkEntitlementsExist(rdRowsByEntId, entMap, hasRows) {
+        if (!hasRows) return { checkName: "Entitlements Exist", status: "N/A", detail: "No RD rows to check" };
+        const missing = [];
+        for (const entId of rdRowsByEntId.keys()) if (!isValidSfId(entId) || !entMap.has(entId)) missing.push(entId);
+        return missing.length === 0
+          ? { checkName: "Entitlements Exist", status: "PASS", detail: "All RD entitlements found" }
+          : { checkName: "Entitlements Exist", status: "FAIL", detail: `Missing entitlements: ${missing.join(", ")}` };
+      }
+      function q_checkInactiveEntitlementsExist(rdRowsByEntId, entMap, hasRows) {
+        const childIds = [];
+        if (hasRows) for (const row of rdRowsByEntId.values()) if (Array.isArray(row.inactiveLines)) for (const il of row.inactiveLines) if (il.childEntId) childIds.push(il.childEntId);
+        if (childIds.length === 0) return { checkName: "Inactive Entitlements Exist", status: "N/A", detail: "No inactive entitlement references" };
+        const missingChild = childIds.filter((id) => !isValidSfId(id) || !entMap.has(id));
+        return missingChild.length === 0
+          ? { checkName: "Inactive Entitlements Exist", status: "PASS", detail: `${childIds.length} inactive entitlement references valid` }
+          : { checkName: "Inactive Entitlements Exist", status: "FAIL", detail: `Missing inactive entitlements: ${[...new Set(missingChild)].join(", ")}` };
+      }
+      function q_checkQuantityWithinCapacity(rdRowsByEntId, entMap, hasRows) {
+        if (!hasRows) return { checkName: "Quantity Within Capacity", status: "N/A", detail: "No RD rows to check" };
+        const overCapacity = [];
+        let unknownCapacity = 0, checkedCount = 0;
+        for (const [entId, row] of rdRowsByEntId) {
+          const ent = entMap.get(entId);
+          if (!ent || row.selectedQty == null || row._multiEnt) continue;
+          const capacity = ent.Entitled_Quantity__c != null ? ent.Entitled_Quantity__c
+            : ent.Quantity__c != null ? ent.Quantity__c : ent.Remaining_Quantity__c;
+          if (capacity == null) { unknownCapacity++; continue; }
+          checkedCount++;
+          if (row.selectedQty > capacity) overCapacity.push(`${entId} (selectedQty ${row.selectedQty} > capacity ${capacity})`);
+        }
+        if (overCapacity.length > 0) return { checkName: "Quantity Within Capacity", status: "FAIL", detail: `Over capacity: ${overCapacity.join("; ")}` };
+        if (checkedCount === 0) return { checkName: "Quantity Within Capacity", status: "WARN", detail: "Entitlement capacity unknown — could not verify" };
+        return { checkName: "Quantity Within Capacity", status: unknownCapacity > 0 ? "WARN" : "PASS",
+          detail: unknownCapacity > 0 ? `${checkedCount} verified, ${unknownCapacity} with unknown capacity` : `${checkedCount} selectedQty values within capacity` };
+      }
+      function q_checkAssetLinkage(rdRowsByEntId, entMap, hasRows, assetReq) {
+        if (!hasRows) return { checkName: "Asset Linkage", status: "N/A", detail: "No RD rows to check" };
+        const noAsset = [];
+        let assetCount = 0;
+        for (const entId of rdRowsByEntId.keys()) {
+          const ent = entMap.get(entId);
+          if (!ent) continue;
+          if (ent.AssetId) assetCount++; else noAsset.push(ent.Name || entId);
+        }
+        if (noAsset.length === 0) return { checkName: "Asset Linkage", status: "PASS", detail: `${assetCount} entitlements have assets` };
+        if (assetReq === false) return { checkName: "Asset Linkage", status: "N/A", detail: `Asset not required by product config; ${noAsset.length} entitlement(s) without asset (expected)` };
+        const sev = assetReq === true ? "FAIL" : "WARN";
+        const pre = assetReq === true ? "Product requires an asset but no asset on: " : "No asset for: ";
+        return { checkName: "Asset Linkage", status: sev, detail: pre + noAsset.join(", ") };
+      }
+      function q_checkCrossEntryCollision(rdRowsByEntId, hasRows) {
+        const rowsWithInactive = [];
+        if (hasRows) for (const [entId, row] of rdRowsByEntId) {
+          if (Array.isArray(row.inactiveLines) && row.inactiveLines.length > 0) {
+            const ids = row.inactiveLines.map((il) => il.childEntId).filter(Boolean);
+            if (ids.length > 0) rowsWithInactive.push({ entId, childIds: ids });
+          }
+        }
+        if (rowsWithInactive.length < 2) return { checkName: "Cross-Entry Inactive Ent Collision", status: rowsWithInactive.length === 1 ? "PASS" : "N/A",
+          detail: rowsWithInactive.length === 1 ? "Only one RD row has inactiveLines — no collision possible" : "No inactiveLines across RD rows" };
+        const allChildIds = rowsWithInactive.flatMap((r) => r.childIds);
+        const affected = rowsWithInactive.map((r) => r.entId);
+        return { checkName: "Cross-Entry Inactive Ent Collision", status: "FAIL",
+          detail: `Inactive ents will collide downstream (getChildEntIdsFromQliJson ignores entId filter): entId ${affected.join(" and ")} will both receive inactive ents ${[...new Set(allChildIds)].join(", ")}` };
+      }
+      function q_checkRefreshLineMotion(qli) {
+        const motion = (qli.Replacement_Motion__c || "").toLowerCase();
+        return motion === "upgrade"
+          ? { checkName: "Refresh Line Motion", status: "PASS", detail: "Refresh line has Replacement_Motion__c = Upgrade" }
+          : { checkName: "Refresh Line Motion", status: "WARN", detail: `Refresh line expected Replacement_Motion__c = Upgrade, found "${qli.Replacement_Motion__c || "(blank)"}"` };
+      }
+      function q_checkMismatchFlagConsistency(rdRowsByEntId, entMap) {
+        const inconsistencies = [];
+        let evaluated = 0;
+        for (const [entId, row] of rdRowsByEntId) {
+          const ent = entMap.get(entId);
+          if (!ent || ent.Quantity__c == null || row.selectedQty == null || row._multiEnt) continue;
+          evaluated++;
+          const shouldFlag = row.selectedQty !== ent.Quantity__c;
+          const isFlagged = !!row.isMismatch;
+          if (shouldFlag !== isFlagged) inconsistencies.push(`${entId} (selectedQty ${row.selectedQty} vs ent qty ${ent.Quantity__c}, isMismatch=${isFlagged})`);
+        }
+        if (evaluated === 0) return null;
+        return inconsistencies.length === 0
+          ? { checkName: "Mismatch Flag Consistency", status: "PASS", detail: "isMismatch flags align with quantities" }
+          : { checkName: "Mismatch Flag Consistency", status: "WARN", detail: `Possible flag inconsistencies: ${inconsistencies.join("; ")}` };
+      }
+      /** Renewed / Subsumed Contract Line presence + format (+ existence if CLI lookup pasted). */
+      function checkRenewedSubsumedCli(line, cliSet, assetReq, exp) {
+        const sp = line.Special_Program__c, dr = line.Disposition_Reason__c;
+        const renewed = line.SBQQSC__RenewedContractLine__c;
+        const subsumedRaw = line.Arroyo_Subsumed_Old_Contract_Line_Items__c || line.Previous_Contract_Line_Items__c;
+        const subsumed = parseCliIds(subsumedRaw);
+        const isDisposeRenewal = DISPOSITION_REPL.includes(dr);
+        const isExpansion = SPECIAL_PROGRAM_REPL.includes(sp);
+
+        const problems = [], notes = [];
+        // Renewed CLI expected on dispose/renewal lines.
+        if (isDisposeRenewal) {
+          if (!renewed) problems.push("Renewed Contract Line (SBQQSC__RenewedContractLine__c) missing on a dispose/renewal line");
+          else if (!isValidCli(renewed)) problems.push(`Renewed Contract Line "${renewed}" is not a valid ContractLineItem Id`);
+          else if (cliSet && !cliSet.has(renewed)) problems.push(`Renewed Contract Line ${renewed} not found in org`);
+          else notes.push("Renewed CLI ✓");
+        }
+        // Subsumed CLI expected on expansion lines that are NOT hardware (asset path).
+        if (isExpansion && assetReq !== true) {
+          if (subsumed.length === 0) problems.push("Subsumed Old Contract Line Items missing on an expansion line");
+          else {
+            const bad = subsumed.filter((id) => !isValidCli(id));
+            const notFound = cliSet ? subsumed.filter((id) => isValidCli(id) && !cliSet.has(id)) : [];
+            if (bad.length) problems.push(`Invalid subsumed CLI Id(s): ${bad.join(", ")}`);
+            if (notFound.length) problems.push(`Subsumed CLI not found in org: ${notFound.join(", ")}`);
+            if (!bad.length && !notFound.length) notes.push(`${subsumed.length} subsumed CLI ✓`);
+          }
+        }
+        // Always sanity-check any populated CLI Ids even when not strictly expected.
+        if (!isDisposeRenewal && !isExpansion) {
+          if (renewed && !isValidCli(renewed)) problems.push(`Renewed Contract Line "${renewed}" is not a valid ContractLineItem Id`);
+          const bad = subsumed.filter((id) => !isValidCli(id));
+          if (bad.length) problems.push(`Invalid subsumed CLI Id(s): ${bad.join(", ")}`);
+        }
+
+        if (problems.length === 0) {
+          return { checkName: "Renewed / Subsumed Contract Lines", status: notes.length ? "PASS" : "N/A",
+            detail: notes.length ? notes.join("; ") : "No renewed/subsumed CLI expected for this line type" };
+        }
+        // Malformed / not-found is a hard defect; pure "missing" is a WARN.
+        const hard = problems.some((p) => /not valid|not found|Invalid/.test(p));
+        return { checkName: "Renewed / Subsumed Contract Lines", status: hard ? "FAIL" : "WARN", detail: problems.join("; ") };
+      }
+
+      /** Entitlement_Links Type/Renewal_Category pairing + Status (shared by both engines). */
+      function checkEntitlementLinkConsistency(entIds, linkMap, sp, dr) {
+        const expected = expectedLinkPairing(sp, dr);
+        const invalidStatus = [], typeMismatch = [], catMismatch = [];
+        let checked = 0;
+        for (const entId of entIds) {
+          const links = linkMap.get(entId);
+          if (!links || !links.length) continue;
+          for (const link of links) {
+            checked++;
+            if (link.Status__c === "Invalid") invalidStatus.push(`${entId} (link ${link.Id || ""} Status=Invalid)`);
+            // Skip split scenarios — multiple valid pairings exist.
+            if (link.Type__c && String(link.Type__c).startsWith("Split")) continue;
+            if (expected) {
+              if (link.Type__c && link.Type__c !== expected.type) typeMismatch.push(`${entId} (link Type=${link.Type__c}, expected ${expected.type})`);
+              if (link.Renewal_Category__c && link.Renewal_Category__c !== expected.category) catMismatch.push(`${entId} (Renewal_Category=${link.Renewal_Category__c}, expected ${expected.category})`);
+            }
+          }
+        }
+        if (checked === 0) return { checkName: "Entitlement Link Consistency", status: "N/A", detail: "No entitlement links to evaluate" };
+        if (invalidStatus.length) return { checkName: "Entitlement Link Consistency", status: "FAIL", detail: `Link(s) marked Status=Invalid: ${invalidStatus.join("; ")}` };
+        const warn = [...typeMismatch, ...catMismatch];
+        if (warn.length) return { checkName: "Entitlement Link Consistency", status: "WARN", detail: warn.join("; ") };
+        return { checkName: "Entitlement Link Consistency", status: "PASS", detail: `${checked} link(s) consistent with line motion` };
+      }
+
+      /** Quote-header context — the parent quote should be a replacement-eligible type. */
+      function q_checkQuoteContext(qli) {
+        const q = qli.SBQQ__Quote__r || {};
+        const type = q.SBQQ__Type__c;
+        if (!type) return { checkName: "Quote Context", status: "WARN", detail: "Parent Quote SBQQ__Type__c is blank" };
+        if (!QUOTE_TYPES_ELIGIBLE.includes(type)) return { checkName: "Quote Context", status: "WARN",
+          detail: `Parent Quote type "${type}" is not a typical replacement/refresh type (${QUOTE_TYPES_ELIGIBLE.join(", ")})` };
+        return { checkName: "Quote Context", status: "PASS", detail: `Quote type ${type}` + (q.Opportunity_Program__c ? `, program ${q.Opportunity_Program__c}` : "") };
+      }
+
+      function runQuoteChecks(args) {
+        const { qli, rdRaw, rdRowsByEntId, entMap, linkMap, cliSet } = args;
+        const refresh = isRefreshLine(qli);
+        const hasRows = rdRowsByEntId && rdRowsByEntId.size > 0;
+        const exp = expectedReplacement(qli.Special_Program__c, qli.Disposition_Reason__c, qli.SBQQSC__RenewedContractLine__c);
+        const assetReq = assetRequired(qli.SBQQ__Product__r);
+        const entIds = hasRows ? [...rdRowsByEntId.keys()] : [];
+        const checks = [
+          q_checkRdParseable(rdRaw, rdRowsByEntId, exp),
+          q_checkRowCompleteness(rdRowsByEntId, hasRows),
+          q_checkReplacementMotionSet(qli, exp),
+          checkArroyoAssetName(qli),
+          checkRenewalRelatedAssetName(qli, qli.SBQQ__Product__r),
+          checkScaleReplacedAssetName(qli),
+          checkSubscribedAssetLookup(qli, entIds, entMap),
+          q_checkDispositionReasonSet(qli),
+          q_checkQuoteContext(qli),
+          checkRenewedSubsumedCli(qli, cliSet, assetReq, exp),
+          q_checkEntitlementsExist(rdRowsByEntId, entMap, hasRows),
+          q_checkInactiveEntitlementsExist(rdRowsByEntId, entMap, hasRows),
+          q_checkQuantityWithinCapacity(rdRowsByEntId, entMap, hasRows),
+          q_checkAssetLinkage(rdRowsByEntId, entMap, hasRows, assetReq),
+          checkEntitlementLinkConsistency(entIds, linkMap, qli.Special_Program__c, qli.Disposition_Reason__c),
+          q_checkCrossEntryCollision(rdRowsByEntId, hasRows),
+        ];
+        if (refresh) checks.push(q_checkRefreshLineMotion(qli));
+        else if (hasRows) { const c = q_checkMismatchFlagConsistency(rdRowsByEntId, entMap); if (c) checks.push(c); }
+        return checks;
+      }
+
+      /* =====================================================================
+       * Stage 3 — Order Item checks (mirror orderChecks.js)
+       * `validOiIds === null` means the optional OrderItem-IDs lookup was not
+       * provided → reference checks degrade to N/A instead of FAIL.
+       * ===================================================================== */
+      const noRdRows = (m) => !m || m.size === 0;
+      function o_checkPtrParseable(ptrRaw, ptrEntries, exp) {
+        if (!ptrRaw) return { checkName: "PTR JSON Present", status: exp && exp.expected ? "FAIL" : "WARN",
+          detail: exp && exp.expected
+            ? `Expected replacement order item (${exp.reason}) but Previous_Transaction_Reference__c is NOT populated`
+            : "No PTR on this Order Item" };
+        if (!ptrEntries) return { checkName: "PTR JSON Parseable", status: "FAIL", detail: "PTR JSON could not be parsed" };
+        return { checkName: "PTR JSON Parseable", status: "PASS", detail: `${ptrEntries.length} entries found` };
+      }
+      function o_checkRdParseable(rdRaw, rdRowsByEntId) {
+        if (!rdRaw) return { checkName: "Replacement Details Present", status: "WARN", detail: "No Replacement Details on Quote Line" };
+        if (!rdRowsByEntId) return { checkName: "Replacement Details Parseable", status: "FAIL", detail: "Replacement Details JSON could not be parsed" };
+        return { checkName: "Replacement Details Parseable", status: "PASS", detail: `${rdRowsByEntId.size} rows found` };
+      }
+      function o_checkEntIdMatch(ptrEntries, rdRowsByEntId) {
+        if (noRdRows(rdRowsByEntId)) return { checkName: "Entitlement ID Match", status: "WARN", detail: "No Replacement Details rows to compare" };
+        const missing = [];
+        for (const entry of ptrEntries) if (entry.entId && !rdRowsByEntId.has(entry.entId)) missing.push(entry.entId);
+        return missing.length === 0
+          ? { checkName: "Entitlement ID Match", status: "PASS", detail: "All PTR entitlement IDs found in Replacement Details" }
+          : { checkName: "Entitlement ID Match", status: "FAIL", detail: `PTR entitlement IDs not found in RD: ${missing.join(", ")}` };
+      }
+      function o_checkQuantityMatch(ptrEntries, rdRowsByEntId, entMap, isRefresh) {
+        if (noRdRows(rdRowsByEntId)) return { checkName: "Quantity Match", status: "N/A", detail: "No Replacement Details to compare" };
+        if (isRefresh) {
+          const offenders = [];
+          for (const entry of ptrEntries) {
+            if (!entry.entId || !rdRowsByEntId.has(entry.entId)) continue;
+            if (entry.usedEntitlementQuantity != null && entry.usedEntitlementQuantity !== 1)
+              offenders.push(`${entry.entId} (PTR: ${entry.usedEntitlementQuantity}, expected 1 for Refresh)`);
+          }
+          return offenders.length === 0
+            ? { checkName: "Quantity Match", status: "PASS", detail: "Refresh program — usedEntitlementQuantity = 1 as expected" }
+            : { checkName: "Quantity Match", status: "FAIL", detail: `Refresh quantity issues: ${offenders.join("; ")}` };
+        }
+        const mismatches = [];
+        for (const entry of ptrEntries) {
+          if (!entry.entId || !rdRowsByEntId.has(entry.entId)) continue;
+          const ptrQty = entry.usedEntitlementQuantity;
+          if (ptrQty == null) continue;
+          const rdRow = rdRowsByEntId.get(entry.entId);
+          if (rdRow._multiEnt) continue; // aggregate selectedQty — not per-ent comparable
+          const flagged = !!entry.isMisMatched || !!rdRow.isMismatch;
+          if (flagged) {
+            const ent = entMap.get(entry.entId);
+            const fullQty = ent ? ent.Quantity__c : null;
+            if (fullQty != null && ptrQty !== fullQty) mismatches.push(`${entry.entId} (mismatch → PTR: ${ptrQty} vs full ent qty: ${fullQty})`);
+          } else {
+            const rdQty = rdRow.selectedQty;
+            if (rdQty != null && ptrQty !== rdQty) mismatches.push(`${entry.entId} (PTR: ${ptrQty} vs RD: ${rdQty})`);
+          }
+        }
+        return mismatches.length === 0
+          ? { checkName: "Quantity Match", status: "PASS", detail: "PTR usedEntitlementQuantity matches expected (program-aware)" }
+          : { checkName: "Quantity Match", status: "FAIL", detail: `Quantity mismatches: ${mismatches.join("; ")}` };
+      }
+      function o_checkMismatchFlag(ptrEntries, rdRowsByEntId, isRefresh, rdHasMismatchInfo) {
+        if (noRdRows(rdRowsByEntId)) return { checkName: "Mismatch Flag Consistency", status: "N/A", detail: "No Replacement Details to compare" };
+        if (isRefresh || !rdHasMismatchInfo) return { checkName: "Mismatch Flag Consistency", status: "N/A",
+          detail: isRefresh ? "Refresh path does not write isMismatch — not applicable" : "No isMismatch flags in Replacement Details to compare" };
+        const inconsistencies = [];
+        for (const entry of ptrEntries) {
+          if (!entry.entId || !rdRowsByEntId.has(entry.entId)) continue;
+          const ptrFlag = !!entry.isMisMatched;
+          const rdFlag = !!rdRowsByEntId.get(entry.entId).isMismatch;
+          if (ptrFlag !== rdFlag) inconsistencies.push(`${entry.entId} (PTR: ${ptrFlag} vs RD: ${rdFlag})`);
+        }
+        return inconsistencies.length === 0
+          ? { checkName: "Mismatch Flag Consistency", status: "PASS", detail: "isMisMatched flags match" }
+          : { checkName: "Mismatch Flag Consistency", status: "WARN", detail: `Mismatch flag inconsistencies: ${inconsistencies.join("; ")}` };
+      }
+      function o_checkOrderItemRefsValid(ptrEntries, validOiIds) {
+        const refs = ptrEntries.filter((e) => e.orderItemId);
+        if (validOiIds === null) return { checkName: "OrderItem References Valid", status: "N/A",
+          detail: refs.length ? "OrderItem-IDs lookup not provided — paste it to validate references" : "No OrderItem references" };
+        const invalid = [];
+        for (const entry of ptrEntries) if (entry.orderItemId && (!isValidSfId(entry.orderItemId) || !validOiIds.has(entry.orderItemId))) invalid.push(entry.orderItemId);
+        return invalid.length === 0
+          ? { checkName: "OrderItem References Valid", status: "PASS", detail: "All referenced OrderItem IDs exist" }
+          : { checkName: "OrderItem References Valid", status: "FAIL", detail: `Invalid OrderItem IDs: ${invalid.join(", ")}` };
+      }
+      function o_checkPhantomValid(ptrEntries, validOiIds) {
+        let hasPhantom = false;
+        const invalid = [];
+        for (const entry of ptrEntries) if (entry.phantomOrderItemId) {
+          hasPhantom = true;
+          if (validOiIds !== null && (!isValidSfId(entry.phantomOrderItemId) || !validOiIds.has(entry.phantomOrderItemId))) invalid.push(entry.phantomOrderItemId);
+        }
+        if (!hasPhantom) return { checkName: "Phantom OrderItem Valid", status: "N/A", detail: "No phantom OrderItem references" };
+        if (validOiIds === null) return { checkName: "Phantom OrderItem Valid", status: "N/A", detail: "OrderItem-IDs lookup not provided — paste it to validate phantom references" };
+        return invalid.length === 0
+          ? { checkName: "Phantom OrderItem Valid", status: "PASS", detail: "All phantom OrderItem IDs exist" }
+          : { checkName: "Phantom OrderItem Valid", status: "FAIL", detail: `Invalid phantom IDs: ${invalid.join(", ")}` };
+      }
+      function o_checkEntitlementsExist(ptrEntries, entMap) {
+        const missing = [];
+        for (const entry of ptrEntries) if (entry.entId && (!isValidSfId(entry.entId) || !entMap.has(entry.entId))) missing.push(entry.entId);
+        return missing.length === 0
+          ? { checkName: "Entitlements Exist", status: "PASS", detail: "All referenced entitlements found" }
+          : { checkName: "Entitlements Exist", status: "FAIL", detail: `Missing entitlements: ${missing.join(", ")}` };
+      }
+      function o_checkEntitlementLinks(ptrEntries, linkMap) {
+        const noLinks = [];
+        let linkedCount = 0;
+        for (const entry of ptrEntries) if (entry.entId && isValidSfId(entry.entId)) {
+          const links = linkMap.get(entry.entId);
+          if (links && links.length > 0) linkedCount++; else noLinks.push(entry.entId);
+        }
+        return noLinks.length === 0
+          ? { checkName: "Entitlement Links", status: "PASS", detail: `${linkedCount} entitlements have links` }
+          : { checkName: "Entitlement Links", status: "WARN", detail: `No links found for: ${noLinks.join(", ")}` };
+      }
+      function o_checkAssetLinkage(ptrEntries, entMap, assetReq) {
+        const noAsset = [];
+        let assetCount = 0;
+        for (const entry of ptrEntries) if (entry.entId && isValidSfId(entry.entId)) {
+          const ent = entMap.get(entry.entId);
+          if (ent && ent.AssetId) assetCount++; else if (ent) noAsset.push(ent.Name || entry.entId);
+        }
+        if (noAsset.length === 0) return { checkName: "Asset Linkage", status: "PASS", detail: `${assetCount} entitlements have assets` };
+        if (assetReq === false) return { checkName: "Asset Linkage", status: "N/A", detail: `Asset not required by product config; ${noAsset.length} entitlement(s) without asset (expected)` };
+        const sev = assetReq === true ? "FAIL" : "WARN";
+        const pre = assetReq === true ? "Product requires an asset but no asset on: " : "No asset for: ";
+        return { checkName: "Asset Linkage", status: sev, detail: pre + noAsset.join(", ") };
+      }
+      /** Order-level Serial Number — required when product config requires an asset. */
+      function o_checkOrderSerial(oi, assetReq) {
+        if (_filled(oi.SerialNumber__c)) return { checkName: "Order Serial Number", status: "PASS", detail: `SerialNumber__c = ${oi.SerialNumber__c}` };
+        if (assetReq === false) return { checkName: "Order Serial Number", status: "N/A", detail: "Product config does not require an asset/serial" };
+        if (assetReq === true) return { checkName: "Order Serial Number", status: "FAIL", detail: "Product requires an asset but SerialNumber__c is blank" };
+        return { checkName: "Order Serial Number", status: "WARN", detail: "SerialNumber__c blank (product asset-requirement unknown)" };
+      }
+      function o_checkTerminatedDate(ptrEntries, entMap) {
+        const noTermDate = [];
+        let termCount = 0, anyChecked = false;
+        for (const entry of ptrEntries) if (entry.entId && isValidSfId(entry.entId)) {
+          const ent = entMap.get(entry.entId);
+          if (ent) { anyChecked = true; if (ent.Terminated_Date__c) termCount++; else noTermDate.push(ent.Name || entry.entId); }
+        }
+        if (!anyChecked) return { checkName: "Terminated Date Set", status: "N/A", detail: "No entitlements to check" };
+        return noTermDate.length === 0
+          ? { checkName: "Terminated Date Set", status: "PASS", detail: `${termCount} entitlements have terminated date` }
+          : { checkName: "Terminated Date Set", status: "WARN", detail: `No terminated date: ${noTermDate.join(", ")}` };
+      }
+      function o_checkInactiveEntitlements(ptrEntries, entMap) {
+        let hasInactive = false;
+        const issues = [];
+        for (const entry of ptrEntries) {
+          if (!Array.isArray(entry.relatedInactiveEntitlements) || entry.relatedInactiveEntitlements.length === 0) continue;
+          hasInactive = true;
+          for (const ie of entry.relatedInactiveEntitlements) if (ie.entitlementId && (!isValidSfId(ie.entitlementId) || !entMap.has(ie.entitlementId))) issues.push(`${ie.entitlementId} not found`);
+        }
+        if (!hasInactive) return { checkName: "Inactive Entitlements", status: "N/A", detail: "No inactive entitlement references" };
+        return issues.length === 0
+          ? { checkName: "Inactive Entitlements", status: "PASS", detail: "All inactive entitlement references valid" }
+          : { checkName: "Inactive Entitlements", status: "FAIL", detail: `Issues: ${issues.join("; ")}` };
+      }
+      function o_checkCrossEntryCollision(ptrEntries, rdRowsByEntId) {
+        if (!ptrEntries || ptrEntries.length < 2 || noRdRows(rdRowsByEntId)) return { checkName: "Cross-Entry Inactive Ent Collision", status: "N/A",
+          detail: ptrEntries && ptrEntries.length < 2 ? "Single PTR entry — no cross-entry collision possible" : "No PTR entries or no Replacement Details to compare" };
+        const rdRowsWithInactive = [];
+        for (const [entId, row] of rdRowsByEntId) if (Array.isArray(row.inactiveLines) && row.inactiveLines.length > 0) {
+          const childIds = row.inactiveLines.map((il) => il.childEntId).filter(Boolean);
+          if (childIds.length > 0) rdRowsWithInactive.push({ entId, childIds });
+        }
+        if (rdRowsWithInactive.length < 2) return { checkName: "Cross-Entry Inactive Ent Collision", status: rdRowsWithInactive.length === 0 ? "N/A" : "PASS",
+          detail: rdRowsWithInactive.length === 0 ? "No inactiveLines in any RD row" : "Only one RD row has inactiveLines — no collision possible" };
+        const allChildIds = rdRowsWithInactive.flatMap((r) => r.childIds);
+        const affectedEntIds = rdRowsWithInactive.map((r) => r.entId);
+        return { checkName: "Cross-Entry Inactive Ent Collision", status: "FAIL",
+          detail: `Inactive ents will collide due to Apex bug (getChildEntIdsFromQliJson ignores entId filter): entId ${affectedEntIds.join(" and ")} will both receive inactive ents ${[...new Set(allChildIds)].join(", ")}` };
+      }
+      function runOrderChecks(args) {
+        const { oi, ptrRaw, rdRaw, ptrEntries, rdRowsByEntId, entMap, linkMap, validOiIds, program, cliSet } = args;
+        const isRefresh = (program || "").toLowerCase() === "refresh";
+        const rdHasMismatchInfo = rdRowsByEntId && [...rdRowsByEntId.values()].some((r) => r.isMismatch != null);
+        const qli = oi.SBQQ__QuoteLine__r || {};
+        const exp = expectedReplacement(qli.Special_Program__c, qli.Disposition_Reason__c, qli.SBQQSC__RenewedContractLine__c);
+        const assetReq = assetRequired(oi.Product2);
+        const cliLine = {
+          Special_Program__c: qli.Special_Program__c, Disposition_Reason__c: qli.Disposition_Reason__c,
+          SBQQSC__RenewedContractLine__c: qli.SBQQSC__RenewedContractLine__c,
+          Arroyo_Subsumed_Old_Contract_Line_Items__c: qli.Arroyo_Subsumed_Old_Contract_Line_Items__c,
+          Previous_Contract_Line_Items__c: oi.Previous_Contract_Line_Items__c,
+        };
+        const srcProd = (qli && qli.SBQQ__Product__r) || (oi.Product2 || null);
+        const checks = [o_checkPtrParseable(ptrRaw, ptrEntries, exp)];
+        if (!ptrEntries || ptrEntries.length === 0) {
+          checks.push(
+            o_checkRdParseable(rdRaw, rdRowsByEntId),
+            o_checkOrderSerial(oi, assetReq),
+            checkArroyoAssetName(qli),
+            checkRenewalRelatedAssetName(qli, srcProd),
+            checkScaleReplacedAssetName(qli),
+            checkSubscribedAssetLookup(qli, [], entMap),
+            checkRenewedSubsumedCli(cliLine, cliSet, assetReq, exp),
+          );
+          return checks;
+        }
+        const entIds = ptrEntries.map((e) => e.entId).filter(Boolean);
+        checks.push(
+          o_checkRdParseable(rdRaw, rdRowsByEntId),
+          o_checkEntIdMatch(ptrEntries, rdRowsByEntId),
+          o_checkQuantityMatch(ptrEntries, rdRowsByEntId, entMap, isRefresh),
+          o_checkMismatchFlag(ptrEntries, rdRowsByEntId, isRefresh, rdHasMismatchInfo),
+          o_checkOrderItemRefsValid(ptrEntries, validOiIds),
+          o_checkPhantomValid(ptrEntries, validOiIds),
+          o_checkEntitlementsExist(ptrEntries, entMap),
+          o_checkEntitlementLinks(ptrEntries, linkMap),
+          checkEntitlementLinkConsistency(entIds, linkMap, qli.Special_Program__c, qli.Disposition_Reason__c),
+          o_checkAssetLinkage(ptrEntries, entMap, assetReq),
+          o_checkOrderSerial(oi, assetReq),
+          checkArroyoAssetName(qli),
+          checkRenewalRelatedAssetName(qli, srcProd),
+          checkScaleReplacedAssetName(qli),
+          checkSubscribedAssetLookup(qli, entIds, entMap),
+          checkRenewedSubsumedCli(cliLine, cliSet, assetReq, exp),
+          o_checkTerminatedDate(ptrEntries, entMap),
+          o_checkInactiveEntitlements(ptrEntries, entMap),
+          o_checkCrossEntryCollision(ptrEntries, rdRowsByEntId),
+        );
+        return checks;
+      }
+
+      /* =====================================================================
+       * Row builders (mirror rowTransform.js)
+       * ===================================================================== */
+      function buildEntitlementDisplay(entIds, entMap, linkMap) {
+        const seen = new Set();
+        const out = [];
+        for (const entId of entIds) {
+          if (!entId || seen.has(entId)) continue;
+          seen.add(entId);
+          const ent = entMap.get(entId);
+          const links = linkMap.get(entId);
+          const found = !!ent;
+          const status = found ? ent.Status : "MISSING";
+          const hasAsset = found && !!ent.AssetId;
+          const hasEntLink = !!(links && links.length > 0);
+          out.push({
+            entId,
+            entName: found ? ent.Name || "—" : "NOT FOUND",
+            status: status || "—",
+            statusCss: status === "Active" ? "ent-status--active" : status === "MISSING" ? "ent-status--missing" : "ent-status--other",
+            hasAsset,
+            assetLabel: hasAsset ? (ent.Asset && (ent.Asset.SerialNumber || ent.Asset.Name)) || "Yes" : "None",
+            assetCss: hasAsset ? "badge--pass" : "badge--warn",
+            hasEntLink,
+            entLinkLabel: hasEntLink ? links[0].Type__c || "Yes" : "None",
+            entLinkCss: hasEntLink ? "badge--pass" : "badge--warn",
+            terminatedDate: found ? fmtDate(ent.Terminated_Date__c) : "—",
+            endDate: found ? fmtDate(ent.EndDate) : "—",
+            quantity: found && ent.Quantity__c != null ? ent.Quantity__c : "—",
+          });
+        }
+        return out;
+      }
+      function recField(label, value, expectedDesc, source) {
+        const isPopulated = value != null && String(value).trim() !== "";
+        const rawValue = isPopulated ? String(value).trim() : "—";
+        const displayValue = rawValue.length > 120 ? rawValue.substring(0, 120) + "..." : rawValue;
+        return { label, value: displayValue, rawValue, expectedDesc, source, isPopulated,
+          statusCss: isPopulated ? "rec-status rec-status--ok" : "rec-status rec-status--missing",
+          statusLabel: isPopulated ? "Populated" : "Missing" };
+      }
+      function buildOrderRecommendedFields(oi, rdRaw) {
+        const qli = oi.SBQQ__QuoteLine__r || {};
+        const req = assetRequired(oi.Product2);
+        const reqLabel = req === true ? "Yes (hardware / Scale)" : req === false ? "No (hybrid license)" : "Unknown — add product config fields";
+        return [
+          recField("Previous Transaction Reference (PTR)", oi.Previous_Transaction_Reference__c, "JSON array with entId, orderItemId, usedEntitlementQuantity", "OrderItem"),
+          recField("Replacement Details (RD)", rdRaw, "JSON with mode, rowValues (entId, selectedQty, isMismatch)", "Quote Line"),
+          recField("Replacement Motion", qli.Replacement_Motion__c, "e.g. Upgrade, Refresh, Conversion", "Quote Line"),
+          recField("Special Program", qli.Special_Program__c, "Upgrade / Conversion / Refresh", "Quote Line"),
+          recField("Disposition Reason", qli.Disposition_Reason__c, "Upgraded / Converted / Refreshed / Renewing", "Quote Line"),
+          recField("Serial Number", oi.SerialNumber__c, "Serial number carried from source entitlement", "OrderItem"),
+          recField("Previous Contract Line Items", oi.Previous_Contract_Line_Items__c, "Comma-separated IDs of previous contract line items", "OrderItem"),
+          recField("Renewed Contract Line", qli.SBQQSC__RenewedContractLine__c, "Lookup → ContractLineItem (8cl…) on the source line", "Quote Line"),
+          recField("Subsumed Old CLI (Arroyo)", qli.Arroyo_Subsumed_Old_Contract_Line_Items__c, "Old CLIs subsumed during replacement", "Quote Line"),
+          recField("Subscribed Asset Name", qli.Subscribed_Asset_Name__c, "Renewal-side asset name", "Quote Line"),
+          recField("Subscribed Asset Names", qli.SubscribedAssetNames__c, "Renewal-side asset name list", "Quote Line"),
+          recField("Arroyo Subscribed Asset Name", qli.Arroyo_Subscribed_Asset_Name__c, "Expansion/New-line asset name", "Quote Line"),
+          recField("Subscribed Asset Lookup", qli.SubscribedAssetLookup__c, "Lookup → Asset on asset-backed renewals", "Quote Line"),
+          recField("Asset required? (product config)", reqLabel, "Driven by Replacement_Category__c / IsHardwareNotRequiredForHybridLicense__c", "Product"),
+          recField("Line Type (QLI)", qli.Line_Type__c, "e.g. Renewal, Amendment, New", "Quote Line"),
+          recField("Line Type (OI)", oi.Line_Type__c, "Order Item line type for downstream processing", "OrderItem"),
+          recField("Replacement Type", oi.Replacement_Type__c, "Type of replacement motion on Order Item", "OrderItem"),
+          recField("Quantity", oi.Quantity, "Order Item quantity — must align with PTR usedEntitlementQuantity", "OrderItem"),
+          recField("Product Level", oi.Product2 ? oi.Product2.Product_Level__c : null, "Product hierarchy level", "Product"),
+          recField("Product Type", oi.Product2 ? oi.Product2.Product_Type__c : null, "Product type classification", "Product"),
+          recField("Product Subtype", oi.Product2 ? oi.Product2.Product_Subtype__c : null, "Product subtype classification", "Product"),
+        ];
+      }
+      function buildQuoteRecommendedFields(qli) {
+        const p = qli.SBQQ__Product__r || {};
+        const q = qli.SBQQ__Quote__r || {};
+        const req = assetRequired(p);
+        const reqLabel = req === true ? "Yes (hardware / Scale)" : req === false ? "No (hybrid license)" : "Unknown — add product config fields";
+        return [
+          recField("Replacement Details (RD)", qli.Replacement_Details__c, "JSON with mode, rowValues (entId, selectedQty, isMismatch, inactiveLines)", "Quote Line"),
+          recField("Replacement Motion", qli.Replacement_Motion__c, "Framework always sets this (e.g. Upgrade)", "Quote Line"),
+          recField("Special Program", qli.Special_Program__c, "Upgrade / Conversion / Refresh (expansion lines)", "Quote Line"),
+          recField("Disposition Reason", qli.Disposition_Reason__c, "Upgraded / Converted / Refreshed / Renewing (dispose/renewal lines)", "Quote Line"),
+          recField("Renewed Contract Line", qli.SBQQSC__RenewedContractLine__c, "Lookup → ContractLineItem (8cl…) on dispose/renewal lines", "Quote Line"),
+          recField("Subsumed Old CLI (Arroyo)", qli.Arroyo_Subsumed_Old_Contract_Line_Items__c, "Comma-separated old CLI Ids subsumed by an expansion line", "Quote Line"),
+          recField("Subscribed Asset Name", qli.Subscribed_Asset_Name__c, "Renewal-side asset name (required with SubscribedAssetNames on related-asset renewals)", "Quote Line"),
+          recField("Subscribed Asset Names", qli.SubscribedAssetNames__c, "Renewal-side asset name list (paired with Subscribed_Asset_Name__c)", "Quote Line"),
+          recField("Arroyo Subscribed Asset Name", qli.Arroyo_Subscribed_Asset_Name__c, "Expansion/New-line asset name (required on New lines unless Replaced)", "Quote Line"),
+          recField("Subscribed Asset Lookup", qli.SubscribedAssetLookup__c, "Lookup → Asset (source entitlement's AssetId) on asset-backed renewals", "Quote Line"),
+          recField("Rel. Subscribed Asset (product)", p.Rel_SubsAsst__c, "Renew:RelatedAsst ⇒ subscribed asset name required on renewal", "Product"),
+          recField("Subscription Pricing", qli.SBQQ__SubscriptionPricing__c, "Fixed Price + Scale + Replaced ⇒ asset names required", "Quote Line"),
+          recField("Product Family", qli.SBQQ__ProductFamily__c, "Rubrik Scale drives Scale-replaced asset rule", "Quote Line"),
+          recField("Asset required? (product config)", reqLabel, "Driven by Replacement_Category__c / IsHardwareNotRequiredForHybridLicense__c", "Product"),
+          recField("Line Type (QLI)", qli.Line_Type__c, "Standard CPQ line type", "Quote Line"),
+          recField("Quote Line Type", qli.Quote_Line_Type__c, "Framework line-type analogue", "Quote Line"),
+          recField("Support Type", qli.Support_Type__c, "Support type carried to the order", "Quote Line"),
+          recField("Quantity", qli.SBQQ__Quantity__c, "Quote Line quantity — must align with RD selectedQty", "Quote Line"),
+          recField("Quote Type", q.SBQQ__Type__c, "Renewal / Renewal+Expansion / Amendment / Quote", "Quote (header)"),
+          recField("Opportunity Program", q.Opportunity_Program__c, "e.g. Go Refresh, Potential Refresh, Upgrade", "Quote (header)"),
+          recField("Product Level", p.Product_Level__c, "Product hierarchy level", "Product"),
+          recField("Product Type", p.Product_Type__c, "Product type classification", "Product"),
+          recField("Product Subtype", p.Product_Subtype__c, "Product subtype classification", "Product"),
+        ];
+      }
+      function buildOrderRow(oi, entMap, linkMap, validOiIds, cliSet) {
+        const ptrRaw = oi.Previous_Transaction_Reference__c || "";
+        const rdRaw = (oi.SBQQ__QuoteLine__r && oi.SBQQ__QuoteLine__r.Replacement_Details__c) || "";
+        const ptrEntries = parsePtrJson(ptrRaw);
+        const rdRowsByEntId = parseRdRows(rdRaw);
+        const checks = runOrderChecks({ oi, ptrRaw, rdRaw, ptrEntries, rdRowsByEntId, entMap, linkMap, validOiIds, program: oi.Program__c, cliSet });
+        const { passCount, failCount, warnCount, overallStatus } = rollupChecks(checks);
+        const entIds = (ptrEntries || []).map((e) => e.entId).filter(Boolean);
+        return {
+          recordId: oi.Id,
+          linkText: oi.Order ? oi.Order.OrderNumber : "",
+          field2: (oi.Product2 && oi.Product2.ProductCode) || "—",
+          field2Title: (oi.Product2 && oi.Product2.Name) || "—",
+          field3: (oi.SBQQ__QuoteLine__r && oi.SBQQ__QuoteLine__r.Name) || "—",
+          field4: oi.Program__c || "—",
+          field5: oi.Replacement_Type__c || "—",
+          quoteName: (oi.Order && oi.Order.SBQQ__Quote__r && oi.Order.SBQQ__Quote__r.Name) || "—",
+          metaA: (oi.Order && oi.Order.Type) || "—",
+          metaB: (oi.Order && oi.Order.Order_Sub_Type__c) || "—",
+          supportRange: `${fmtDate(oi.Support_Start_Date__c)} - ${fmtDate(oi.Support_End_Date__c)}`,
+          overallStatus, statusCss: statusCss(overallStatus), passCount, failCount, warnCount,
+          showPtr: true, ptrFormatted: formatJson(ptrRaw), rdFormatted: formatJson(rdRaw),
+          checks: checks.map((c) => ({ checkName: c.checkName, status: c.status, detail: c.detail, statusCss: checkStatusCss(c.status) })),
+          recommendedFields: buildOrderRecommendedFields(oi, rdRaw),
+          entitlements: buildEntitlementDisplay(entIds, entMap, linkMap),
+        };
+      }
+      function buildQuoteRow(qli, entMap, linkMap, cliSet) {
+        const rdRaw = qli.Replacement_Details__c || "";
+        const rdRowsByEntId = parseRdRows(rdRaw);
+        const checks = runQuoteChecks({ qli, rdRaw, rdRowsByEntId, entMap, linkMap, cliSet });
+        const { passCount, failCount, warnCount, overallStatus } = rollupChecks(checks);
+        const entIds = rdRowsByEntId ? [...rdRowsByEntId.keys()] : [];
+        const product = qli.SBQQ__Product__r || {};
+        return {
+          recordId: qli.Id,
+          linkText: qli.Name || qli.Id,
+          field2: product.ProductCode || "—",
+          field2Title: product.Name || "—",
+          field3: qli.Replacement_Motion__c || "—",
+          field4: qli.Disposition_Reason__c || "—",
+          field5: qli.Line_Type__c || "—",
+          quoteName: (qli.SBQQ__Quote__r && qli.SBQQ__Quote__r.Name) || "—",
+          metaA: qli.Special_Program__c || "—",
+          metaB: qli.Support_Type__c || "—",
+          supportRange: qli.SBQQ__Quantity__c != null ? `Qty: ${qli.SBQQ__Quantity__c}` : "—",
+          overallStatus, statusCss: statusCss(overallStatus), passCount, failCount, warnCount,
+          showPtr: false, ptrFormatted: "", rdFormatted: formatJson(rdRaw),
+          checks: checks.map((c) => ({ checkName: c.checkName, status: c.status, detail: c.detail, statusCss: checkStatusCss(c.status) })),
+          recommendedFields: buildQuoteRecommendedFields(qli),
+          entitlements: buildEntitlementDisplay(entIds, entMap, linkMap),
+        };
+      }
+
+      /* =====================================================================
+       * UI / orchestration
+       * ===================================================================== */
+      let MODE = "QUOTE"; // QUOTE | ORDER
+      let primaryRecords = [];      // filtered to replacement/refresh lines
+      let entIdsNeeded = new Set();
+      let oiIdsNeeded = new Set();
+      let cliIdsNeeded = new Set();
+      let rows = [];
+      let statusFilter = "ALL";
+      let currentPage = 1;
+      const pageSize = 25;
+      const expanded = new Set();
+
+      function todayISO(offsetDays) {
+        // Avoids Date.now-style helpers; en-CA gives YYYY-MM-DD.
+        const d = new Date();
+        if (offsetDays) d.setDate(d.getDate() + offsetDays);
+        return d.toLocaleDateString("en-CA");
+      }
+
+      function setMode(mode) {
+        MODE = mode;
+        document.getElementById("modeQuote").classList.toggle("active", mode === "QUOTE");
+        document.getElementById("modeOrder").classList.toggle("active", mode === "ORDER");
+        // reset downstream
+        document.getElementById("lookupCard").classList.add("hidden");
+        document.getElementById("resultsCard").classList.add("hidden");
+        document.getElementById("primaryMsg").innerHTML = "";
+        renderPrimaryQuery();
+      }
+
+      function renderPrimaryQuery() {
+        const hint = document.getElementById("primaryHint");
+        const label = document.getElementById("primaryLabel");
+        const box = document.getElementById("primaryQuery");
+        if (MODE === "QUOTE") {
+          hint.innerHTML = "Query the Quote Lines you want to check. Validated lines are those that carry replacement data <em>or</em> are <strong>expected</strong> to (Special_Program__c / Disposition_Reason__c / Renewed Contract Line set) — so missing-population lines are caught too.";
+          label.textContent = "Paste SBQQ__QuoteLine__c results";
+          box.textContent =
+            `SELECT ${QLI_FIELDS}\nFROM SBQQ__QuoteLine__c\nWHERE SBQQ__Quote__r.Name = 'Q-00000000'\n-- or:  WHERE SBQQ__Quote__c = '<quoteId>'\nORDER BY Name LIMIT 2000`;
+        } else {
+          hint.innerHTML = "Query the Order Items you want to check. Validated items are those carrying a PTR / source-line Replacement_Details__c <em>or</em> whose source Quote Line is <strong>expected</strong> to be a replacement (so missing-PTR items are caught too).";
+          label.textContent = "Paste OrderItem results";
+          box.textContent =
+            `SELECT ${OI_FIELDS}\nFROM OrderItem\nWHERE Order.EffectiveDate >= ${todayISO(-90)} AND Order.EffectiveDate <= ${todayISO(0)}\n-- or:  WHERE Order.OrderNumber IN ('00012345')\n-- or:  WHERE Order.Order_Sub_Type__c = 'Refresh'\nORDER BY Order.OrderNumber LIMIT 2000`;
+        }
+      }
+
+      // Accept array, {records}, {result:{records}}, {result:[...]}
+      function normalizeRecords(text) {
+        const t = (text || "").trim();
+        if (!t) return [];
+        let parsed;
+        try { parsed = JSON.parse(t); }
+        catch (e) { throw new Error("Not valid JSON — " + e.message); }
+        if (Array.isArray(parsed)) return parsed;
+        if (parsed && Array.isArray(parsed.records)) return parsed.records;
+        if (parsed && parsed.result) {
+          if (Array.isArray(parsed.result)) return parsed.result;
+          if (Array.isArray(parsed.result.records)) return parsed.result.records;
+        }
+        throw new Error("Could not find a records array (expected [...], {records:[...]} or {result:{records:[...]}}).");
+      }
+
+      function msg(elId, type, text) {
+        document.getElementById(elId).innerHTML = text ? `<div class="notice ${type}">${text}</div>` : "";
+      }
+
+      function parsePrimary() {
+        let recs;
+        try { recs = normalizeRecords(document.getElementById("primaryInput").value); }
+        catch (e) { msg("primaryMsg", "err", "Could not read the pasted data: " + e.message); return; }
+        if (recs.length === 0) { msg("primaryMsg", "err", "No records found in the pasted data."); return; }
+
+        entIdsNeeded = new Set();
+        oiIdsNeeded = new Set();
+        cliIdsNeeded = new Set();
+        const addCli = (raw) => parseCliIds(raw).forEach((id) => { if (isValidSfId(id)) cliIdsNeeded.add(id); });
+        let expectedMissing = 0;
+
+        if (MODE === "QUOTE") {
+          // Include lines that HAVE replacement data AND lines that SHOULD have it
+          // (Special_Program / Disposition / Renewed CLI mark them) but may be missing it.
+          primaryRecords = recs.filter((q) => {
+            const has = (q.Replacement_Motion__c && String(q.Replacement_Motion__c).trim()) ||
+              (q.Replacement_Details__c && String(q.Replacement_Details__c).trim());
+            const exp = expectedReplacement(q.Special_Program__c, q.Disposition_Reason__c, q.SBQQSC__RenewedContractLine__c).expected;
+            if (exp && !has) expectedMissing++;
+            return has || exp;
+          });
+          for (const q of primaryRecords) {
+            if (q.Replacement_Details__c) extractIdsFromRd(q.Replacement_Details__c, entIdsNeeded);
+            addCli(q.SBQQSC__RenewedContractLine__c);
+            addCli(q.Arroyo_Subsumed_Old_Contract_Line_Items__c);
+          }
+        } else {
+          primaryRecords = recs.filter((oi) => {
+            const hasPtr = oi.Previous_Transaction_Reference__c && oi.Previous_Transaction_Reference__c.trim();
+            const rd = oi.SBQQ__QuoteLine__r && oi.SBQQ__QuoteLine__r.Replacement_Details__c;
+            const hasRd = rd && rd.trim();
+            const qli = oi.SBQQ__QuoteLine__r || {};
+            const exp = expectedReplacement(qli.Special_Program__c, qli.Disposition_Reason__c, qli.SBQQSC__RenewedContractLine__c).expected;
+            if (exp && !hasPtr && !hasRd) expectedMissing++;
+            return hasPtr || hasRd || exp;
+          });
+          for (const oi of primaryRecords) {
+            if (oi.Previous_Transaction_Reference__c) extractIdsFromPtr(oi.Previous_Transaction_Reference__c, entIdsNeeded, oiIdsNeeded);
+            const qli = oi.SBQQ__QuoteLine__r || {};
+            if (qli.Replacement_Details__c) extractIdsFromRd(qli.Replacement_Details__c, entIdsNeeded);
+            addCli(qli.SBQQSC__RenewedContractLine__c);
+            addCli(qli.Arroyo_Subsumed_Old_Contract_Line_Items__c);
+            addCli(oi.Previous_Contract_Line_Items__c);
+          }
+        }
+
+        if (primaryRecords.length === 0) {
+          msg("primaryMsg", "warn", `Parsed ${recs.length} record(s), but none carry — or are expected to carry — replacement/refresh data. Nothing to validate. (Tip: include Special_Program__c / Disposition_Reason__c / SBQQSC__RenewedContractLine__c so expected-but-missing lines are detected.)`);
+          document.getElementById("lookupCard").classList.add("hidden");
+          return;
+        }
+
+        const missTxt = expectedMissing > 0 ? ` ⚠ ${expectedMissing} line(s) are EXPECTED to carry replacement data but are missing it.` : "";
+        msg("primaryMsg", "ok", `Parsed ${recs.length} record(s); ${primaryRecords.length} line(s) to validate.${missTxt} Found ${entIdsNeeded.size} entitlement ID(s)` + (MODE === "ORDER" ? `, ${oiIdsNeeded.size} order-item ref ID(s)` : "") + `, ${cliIdsNeeded.size} contract-line ID(s).`);
+        buildLookupQueries();
+        document.getElementById("lookupCard").classList.remove("hidden");
+        document.getElementById("lookupCard").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function inClause(idSet) { return [...idSet].map((id) => `'${String(id).replace(/'/g, "\\'")}'`).join(","); }
+
+      function buildLookupQueries() {
+        const entWrap = document.getElementById("entQueryWrap");
+        const elWrap = document.getElementById("elQueryWrap");
+        const oiWrap = document.getElementById("oiQueryWrap");
+
+        if (entIdsNeeded.size === 0) {
+          document.getElementById("entQuery").textContent = "-- No entitlement IDs found in the JSON — no Entitlement lookup needed.";
+          document.getElementById("elQuery").textContent = "-- No entitlement IDs found — no Entitlement_Links__c lookup needed.";
+        } else {
+          const ids = inClause(entIdsNeeded);
+          document.getElementById("entQuery").textContent = `SELECT ${ENT_FIELDS}\nFROM Entitlement\nWHERE Id IN (${ids})`;
+          document.getElementById("elQuery").textContent = `SELECT ${EL_FIELDS}\nFROM Entitlement_Links__c\nWHERE Previous_Entitlement__c IN (${ids})\n   OR Renewed_Entitlement__c IN (${ids})`;
+        }
+
+        if (MODE === "ORDER" && oiIdsNeeded.size > 0) {
+          oiWrap.classList.remove("hidden");
+          document.getElementById("oiQuery").textContent = `SELECT Id\nFROM OrderItem\nWHERE Id IN (${inClause(oiIdsNeeded)})`;
+        } else {
+          oiWrap.classList.add("hidden");
+        }
+
+        const cliWrap = document.getElementById("cliQueryWrap");
+        if (cliIdsNeeded.size > 0) {
+          cliWrap.classList.remove("hidden");
+          document.getElementById("cliQuery").textContent = `SELECT Id\nFROM ContractLineItem\nWHERE Id IN (${inClause(cliIdsNeeded)})`;
+        } else {
+          cliWrap.classList.add("hidden");
+        }
+      }
+
+      function runValidation() {
+        msg("lookupMsg", "", "");
+        let entRecs = [], elRecs = [], oiRecs = null;
+        try {
+          entRecs = normalizeRecords(document.getElementById("entInput").value);
+        } catch (e) { msg("lookupMsg", "err", "Entitlement data: " + e.message); return; }
+        try {
+          elRecs = normalizeRecords(document.getElementById("elInput").value);
+        } catch (e) { msg("lookupMsg", "err", "Entitlement_Links__c data: " + e.message); return; }
+
+        let validOiIds = null;
+        if (MODE === "ORDER") {
+          const oiText = document.getElementById("oiInput").value.trim();
+          if (oiText) {
+            try { oiRecs = normalizeRecords(oiText); }
+            catch (e) { msg("lookupMsg", "err", "OrderItem-IDs data: " + e.message); return; }
+            validOiIds = new Set(oiRecs.map((r) => r.Id).filter(Boolean));
+          }
+        }
+
+        // Optional ContractLineItem existence lookup (Renewed / Subsumed CLI).
+        let cliSet = null;
+        const cliText = document.getElementById("cliInput").value.trim();
+        if (cliText) {
+          let cliRecs;
+          try { cliRecs = normalizeRecords(cliText); }
+          catch (e) { msg("lookupMsg", "err", "ContractLineItem data: " + e.message); return; }
+          cliSet = new Set(cliRecs.map((r) => r.Id).filter(Boolean));
+        }
+
+        const entMap = buildEntMap(entRecs);
+        const linkMap = buildLinkMap(elRecs);
+
+        rows = MODE === "QUOTE"
+          ? primaryRecords.map((q) => buildQuoteRow(q, entMap, linkMap, cliSet))
+          : primaryRecords.map((oi) => buildOrderRow(oi, entMap, linkMap, validOiIds, cliSet));
+
+        statusFilter = "ALL";
+        currentPage = 1;
+        expanded.clear();
+        renderResults();
+        document.getElementById("resultsCard").classList.remove("hidden");
+        document.getElementById("resultsCard").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      // ── Results rendering ──────────────────────────────────────────────
+      function isQuote() { return MODE === "QUOTE"; }
+      function filteredRows() {
+        if (statusFilter === "ALL") return rows;
+        if (statusFilter === "FAIL") return rows.filter((r) => r.overallStatus === "FAIL");
+        if (statusFilter === "WARN") return rows.filter((r) => r.overallStatus === "WARN" || r.overallStatus === "FAIL");
+        return rows.filter((r) => r.overallStatus === "PASS");
+      }
+      function setStatusFilter(f) {
+        statusFilter = f; currentPage = 1;
+        for (const id of ["statAll", "statFail", "statWarn", "statPass"]) document.getElementById(id).classList.remove("active");
+        document.getElementById({ ALL: "statAll", FAIL: "statFail", WARN: "statWarn", PASS: "statPass" }[f]).classList.add("active");
+        renderResults();
+      }
+      function changePage(delta) {
+        const total = Math.max(1, Math.ceil(filteredRows().length / pageSize));
+        currentPage = Math.min(total, Math.max(1, currentPage + delta));
+        renderResults();
+      }
+      function expandAll(open) {
+        expanded.clear();
+        if (open) for (const r of rows) expanded.add(r.recordId);
+        renderResults();
+      }
+      function toggleRow(id) {
+        if (expanded.has(id)) expanded.delete(id); else expanded.add(id);
+        renderResults();
+      }
+
+      function esc(s) {
+        return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      }
+
+      function renderResults() {
+        document.getElementById("modeLabel").textContent = isQuote()
+          ? "— Quote Lines (Stage 1/2: RD & field completeness before order conversion)"
+          : "— Order Items (Stage 3: PTR vs Replacement Details)";
+        document.getElementById("numAll").textContent = rows.length;
+        document.getElementById("numFail").textContent = rows.filter((r) => r.overallStatus === "FAIL").length;
+        document.getElementById("numWarn").textContent = rows.filter((r) => r.overallStatus === "WARN").length;
+        document.getElementById("numPass").textContent = rows.filter((r) => r.overallStatus === "PASS").length;
+
+        const head = document.getElementById("resultsHead");
+        head.innerHTML = isQuote()
+          ? "<th></th><th>Quote Line</th><th>Product</th><th>Motion</th><th>Disposition</th><th>Line Type</th><th>Status</th><th>Checks</th>"
+          : "<th></th><th>Order #</th><th>Product</th><th>QLI</th><th>Program</th><th>Rep. Type</th><th>Status</th><th>Checks</th>";
+
+        const fr = filteredRows();
+        const total = Math.max(1, Math.ceil(fr.length / pageSize));
+        if (currentPage > total) currentPage = total;
+        const start = (currentPage - 1) * pageSize;
+        const pageRows = fr.slice(start, start + pageSize);
+
+        const noFiltered = document.getElementById("noFiltered");
+        noFiltered.innerHTML = (rows.length > 0 && fr.length === 0)
+          ? `<div class="notice info">No rows match the "${statusFilter}" filter.</div>` : "";
+
+        const body = document.getElementById("resultsBody");
+        body.innerHTML = "";
+        for (const r of pageRows) {
+          const open = expanded.has(r.recordId);
+          const tr = document.createElement("tr");
+          tr.className = "main-row";
+          tr.onclick = () => toggleRow(r.recordId);
+          tr.innerHTML =
+            `<td><span class="caret ${open ? "open" : ""}">▶</span></td>` +
+            `<td><strong>${esc(r.linkText)}</strong><div class="small muted">${esc(r.quoteName)}</div></td>` +
+            `<td title="${esc(r.field2Title)}">${esc(r.field2)}</td>` +
+            `<td>${esc(r.field3)}</td>` +
+            `<td>${esc(r.field4)}</td>` +
+            `<td>${esc(r.field5)}</td>` +
+            `<td><span class="${r.statusCss}">${esc(r.overallStatus)}</span></td>` +
+            `<td><span class="pill p">${r.passCount}P</span><span class="pill w">${r.warnCount}W</span><span class="pill f">${r.failCount}F</span></td>`;
+          body.appendChild(tr);
+
+          if (open) {
+            const dtr = document.createElement("tr");
+            const td = document.createElement("td");
+            td.colSpan = 8;
+            td.className = "detail";
+            td.innerHTML = renderDetail(r);
+            dtr.appendChild(td);
+            body.appendChild(dtr);
+          }
+        }
+
+        document.getElementById("pageLabel").textContent = `Page ${currentPage} of ${total} — ${fr.length} row(s)`;
+        document.getElementById("prevBtn").disabled = currentPage <= 1;
+        document.getElementById("nextBtn").disabled = currentPage >= total;
+      }
+
+      function renderDetail(r) {
+        let html = "";
+
+        // Checks
+        html += `<h4>Validation checks</h4><table class="checks-grid"><tbody>`;
+        for (const c of r.checks) {
+          html += `<tr><td style="width:240px"><span class="${c.statusCss}">${esc(c.status)}</span> &nbsp;${esc(c.checkName)}</td><td>${esc(c.detail)}</td></tr>`;
+        }
+        html += `</tbody></table>`;
+
+        // Recommended fields
+        if (r.recommendedFields && r.recommendedFields.length) {
+          html += `<h4>Expected / recommended fields</h4><div class="recfields">`;
+          for (const f of r.recommendedFields) {
+            html += `<div class="recfield"><div class="rf-top"><span class="rf-label">${esc(f.label)}</span><span class="${f.statusCss}">${esc(f.statusLabel)}</span></div>` +
+              `<div class="rf-val">${esc(f.value)}</div><div class="rf-exp">${esc(f.expectedDesc)}</div><div class="rf-src">${esc(f.source)}</div></div>`;
+          }
+          html += `</div>`;
+        }
+
+        // Entitlements
+        if (r.entitlements && r.entitlements.length) {
+          html += `<h4>Referenced entitlements</h4><table class="ent-table"><thead><tr><th>Entitlement</th><th>Name</th><th>Status</th><th>Asset</th><th>Ent Link</th><th>Terminated</th><th>End</th><th>Qty</th></tr></thead><tbody>`;
+          for (const e of r.entitlements) {
+            html += `<tr><td>${esc(e.entId)}</td><td>${esc(e.entName)}</td>` +
+              `<td><span class="${e.statusCss}">${esc(e.status)}</span></td>` +
+              `<td><span class="${e.assetCss}">${esc(e.assetLabel)}</span></td>` +
+              `<td><span class="${e.entLinkCss}">${esc(e.entLinkLabel)}</span></td>` +
+              `<td>${esc(e.terminatedDate)}</td><td>${esc(e.endDate)}</td><td>${esc(e.quantity)}</td></tr>`;
+          }
+          html += `</tbody></table>`;
+        }
+
+        // JSON panels
+        html += `<h4>JSON payloads</h4><div class="json-panels ${r.showPtr ? "" : "single"}">`;
+        if (r.showPtr) {
+          html += `<div class="json-panel"><div class="small muted">Previous Transaction Reference (PTR)</div><pre>${esc(r.ptrFormatted)}</pre></div>`;
+        }
+        html += `<div class="json-panel"><div class="small muted">Replacement Details (RD)</div><pre>${esc(r.rdFormatted)}</pre></div>`;
+        html += `</div>`;
+
+        return html;
+      }
+
+      // ── CSV export (mirror component) ──────────────────────────────────
+      function escCsv(val) {
+        if (val == null) return "";
+        const s = String(val);
+        return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+      }
+      function exportCsv() {
+        const headers = isQuote()
+          ? ["Quote", "Quote Line", "Quote Line ID", "Product Code", "Motion", "Disposition", "Line Type", "Overall Status", "Pass", "Fail", "Warn", "Check Details"]
+          : ["Order Number", "Order Item ID", "Product Code", "QLI", "Program", "Replacement Type", "Overall Status", "Pass", "Fail", "Warn", "Check Details"];
+        const lines = [headers.join(",")];
+        for (const row of filteredRows()) {
+          const checkSummary = (row.checks || []).map((c) => `${c.checkName}: ${c.status}`).join(" | ");
+          const cols = isQuote()
+            ? [escCsv(row.quoteName), escCsv(row.linkText), row.recordId, escCsv(row.field2), escCsv(row.field3), escCsv(row.field4), escCsv(row.field5), row.overallStatus, row.passCount, row.failCount, row.warnCount, escCsv(checkSummary)]
+            : [escCsv(row.linkText), row.recordId, escCsv(row.field2), escCsv(row.field3), escCsv(row.field4), escCsv(row.field5), row.overallStatus, row.passCount, row.failCount, row.warnCount, escCsv(checkSummary)];
+          lines.push(cols.join(","));
+        }
+        const csv = "﻿" + lines.join("\r\n");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+        a.download = `${isQuote() ? "QLI" : "PTR"}_Validation_${todayISO(0)}.csv`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
+      // ── small utilities ────────────────────────────────────────────────
+      function copyEl(id) {
+        const text = document.getElementById(id).textContent;
+        navigator.clipboard && navigator.clipboard.writeText
+          ? navigator.clipboard.writeText(text).then(() => toast("Copied to clipboard")).catch(() => toast("Copy failed"))
+          : toast("Clipboard not available");
+      }
+      let toastTimer;
+      function toast(t) {
+        const el = document.getElementById("toast");
+        el.textContent = t;
+        el.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
+      }
+
+      // ── Sample data (illustrates the flow without an org) ──────────────
+      function loadSample() {
+        if (MODE === "QUOTE") {
+          const sample = [
+            {
+              // New/expansion line — Arroyo asset name required (and present) → Arroyo check PASS.
+              Id: "a0Q000000000001AAA", Name: "QL-Refresh-001",
+              SBQQ__Quote__r: { Name: "Q-DEMO-001", SBQQ__Type__c: "Renewal", Opportunity_Program__c: "Go Refresh" },
+              SBQQ__Product__r: { Name: "Widget Pro", ProductCode: "WGT-PRO", Product_Level__c: "Hardware", Product_Type__c: "Hardware",
+                IsHardwareNotRequiredForHybridLicense__c: false, Replacement_Category__c: "Enterprise Data Protection - Scale" },
+              SBQQ__Quantity__c: 5,
+              Replacement_Motion__c: "Upgrade",
+              Special_Program__c: "Refresh",
+              Disposition_Reason__c: "None",
+              Arroyo_Subscribed_Asset_Name__c: "AA001, AA002",
+              Subscribed_Asset_Name__c: null, SubscribedAssetNames__c: null,
+              Arroyo_Subsumed_Old_Contract_Line_Items__c: "8118Y000000s1f9QAA",
+              Line_Type__c: "New", Quote_Line_Type__c: "New", Support_Type__c: "Premier",
+              Replacement_Details__c: JSON.stringify({ targetProductType: "Hardware", rowValues: [{ entId: "5e8000000000001AAA", selectedQty: 5 }] }),
+            },
+            {
+              // Renewal related-asset line — product carries Renew:RelatedAsst but the
+              // two subscribed-asset-name fields are blank → Renewal asset check FAIL.
+              Id: "a0Q000000000002AAA", Name: "QL-Renew-002",
+              SBQQ__Quote__r: { Name: "Q-DEMO-001", SBQQ__Type__c: "Renewal+Expansion" },
+              SBQQ__Product__r: { Name: "Widget Std", ProductCode: "WGT-STD", Product_Type__c: "Software",
+                IsHardwareNotRequiredForHybridLicense__c: true, Rel_SubsAsst__c: "Renew:RelatedAsst" },
+              SBQQ__Quantity__c: 10,
+              Replacement_Motion__c: "Upgrade",
+              Disposition_Reason__c: "Renewing",
+              Quote_Line_Type__c: "Renewal", Line_Type__c: "Renewal",
+              Subscribed_Asset_Name__c: null, SubscribedAssetNames__c: null, Arroyo_Subscribed_Asset_Name__c: null,
+              Arroyo_Subsumed_Old_Contract_Line_Items__c: "8118Y000000s1fBQAQ,NOTANID",
+              Replacement_Details__c: JSON.stringify({ mode: "replacement", rowValues: [
+                { entId: "5e8000000000002AAA", selectedQty: 12, isMismatch: false, inactiveLines: [{ childEntId: "5e800000000000AAAA" }] },
+                { entId: "5e8000000000003AAA", selectedQty: 3, inactiveLines: [{ childEntId: "5e800000000000BBBB" }] },
+              ] }),
+            },
+            {
+              // Expected replacement line (Special_Program set) but RD/motion MISSING — should FAIL.
+              Id: "a0Q000000000003AAA", Name: "QL-MissingRD-003",
+              SBQQ__Quote__r: { Name: "Q-DEMO-001", SBQQ__Type__c: "Renewal" },
+              SBQQ__Product__r: { Name: "Widget Conv", ProductCode: "WGT-CNV", Product_Type__c: "Software", IsHardwareNotRequiredForHybridLicense__c: true },
+              SBQQ__Quantity__c: 2,
+              Special_Program__c: "Conversion",
+              Disposition_Reason__c: "Converted",
+            },
+          ];
+          document.getElementById("primaryInput").value = JSON.stringify({ records: sample }, null, 2);
+          toast("Quote sample loaded — click Parse");
+        } else {
+          const sample = [
+            {
+              Id: "802000000000001AAA",
+              Order: { OrderNumber: "00012345", Type: "Renewal", Order_Sub_Type__c: "Refresh", SBQQ__Quote__r: { Name: "Q-DEMO-001" } },
+              Product2: { Name: "Widget Pro", ProductCode: "WGT-PRO", IsHardwareNotRequiredForHybridLicense__c: false },
+              Quantity: 1, Program__c: "Refresh", Replacement_Type__c: "Upgrade", Line_Type__c: "Renewal",
+              SerialNumber__c: "SN-123", Previous_Contract_Line_Items__c: "8118Y000000s1f6QAA",
+              Support_Start_Date__c: "2026-01-01", Support_End_Date__c: "2027-01-01",
+              SBQQ__QuoteLine__r: { Name: "QL-Refresh-001", Replacement_Motion__c: "Upgrade",
+                Special_Program__c: "Refresh", Disposition_Reason__c: "Refreshed", SBQQSC__RenewedContractLine__c: "8118Y000000s1f9QAA",
+                Replacement_Details__c: JSON.stringify({ mode: "refresh", rowValues: [{ entId: "5e8000000000001AAA", selectedQty: 5 }] }) },
+              Previous_Transaction_Reference__c: JSON.stringify([{ entId: "5e8000000000001AAA", orderItemId: "802000000000009AAA", usedEntitlementQuantity: 1 }]),
+            },
+          ];
+          document.getElementById("primaryInput").value = JSON.stringify({ records: sample }, null, 2);
+          toast("Order sample loaded — click Parse");
+        }
+      }
+
+      // init
+      renderPrimaryQuery();
+    </script>
+  </body>
+</html>

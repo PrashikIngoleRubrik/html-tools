@@ -1,1 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CustomReplacementPage — Live Previewer</title>
+<style>
+  :root {
+    --bg: #f4f6f8;
+    --panel: #ffffff;
+    --ink: #1c2733;
+    --ink-soft: #64748b;
+    --border: #d7dee5;
+    --accent: #1c6fa8;
+    --accent-ink: #ffffff;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --err-bg: #fdecec;
+    --err-border: #e0a3a3;
+    --err-ink: #7a1f1f;
+  }
 
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #11161b;
+      --panel: #181f26;
+      --ink: #e6edf3;
+      --ink-soft: #93a2b1;
+      --border: #313d47;
+      --accent: #6fc2ec;
+      --accent-ink: #0b1015;
+      --err-bg: #33191a;
+      --err-border: #6e3232;
+      --err-ink: #f0b4b4;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #11161b;
+    --panel: #181f26;
+    --ink: #e6edf3;
+    --ink-soft: #93a2b1;
+    --border: #313d47;
+    --accent: #6fc2ec;
+    --accent-ink: #0b1015;
+    --err-bg: #33191a;
+    --err-border: #6e3232;
+    --err-ink: #f0b4b4;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  header h1 {
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  header p {
+    margin: 0.15rem 0 0;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+
+  .toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+  button {
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.5rem 0.9rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  button.primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+  }
+
+  button:hover { filter: brightness(0.97); }
+
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(320px, 38%) 1fr;
+    gap: 1px;
+    background: var(--border);
+    overflow: hidden;
+  }
+
+  @media (max-width: 860px) {
+    main { grid-template-columns: 1fr; grid-template-rows: 40% 60%; }
+  }
+
+  .pane {
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .pane-head {
+    padding: 0.5rem 1rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--border);
+    flex: 0 0 auto;
+  }
+
+  #input {
+    flex: 1;
+    resize: none;
+    border: none;
+    outline: none;
+    padding: 1rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    background: var(--panel);
+    color: var(--ink);
+  }
+
+  .preview-scroll {
+    flex: 1;
+    overflow: auto;
+    padding: 1.5rem;
+  }
+
+  #error {
+    display: none;
+    margin: 1rem 1rem 0;
+    padding: 0.75rem 1rem;
+    background: var(--err-bg);
+    border: 1px solid var(--err-border);
+    color: var(--err-ink);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    font-family: var(--mono);
+  }
+
+  /* --- the rendered document itself is a fixed white/black "paper",   --- */
+  /* --- since it emulates the literal PDF the VF page's XML produces.  --- */
+  .paper {
+    background: #ffffff;
+    color: #000000;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 10pt;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem clamp(1rem, 3vw, 2.5rem);
+    border: 1px solid #cfd4d8;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  .paper table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  .paper td, .paper th {
+    border: 1px solid #000000;
+    padding: 4px 6px;
+    vertical-align: middle;
+  }
+
+  .paper th { font-weight: bold; }
+
+  .paper[data-empty] {
+    color: #8a8f94;
+    font-style: italic;
+    border-style: dashed;
+    box-shadow: none;
+    text-align: center;
+    padding: 3rem 1rem;
+  }
+
+  [data-src-tag] { outline: 1px dashed rgba(255, 0, 0, 0.35); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>CustomReplacementPage — Live Previewer</h1>
+    <p>Paste the raw XML this VF page returns and see it rendered the way the SBQQ document generator would print it.</p>
+  </div>
+  <div class="toolbar">
+    <button id="sampleBtn" type="button">Load sample</button>
+    <button id="clearBtn" type="button">Clear</button>
+    <button id="renderBtn" class="primary" type="button">Render preview</button>
+  </div>
+</header>
+
+<main>
+  <section class="pane">
+    <div class="pane-head">Paste page source (XML)</div>
+    <textarea id="input" spellcheck="false" placeholder="Paste the content of CustomReplacementPage.page here (block / table / table-row / table-cell markup)..."></textarea>
+  </section>
+
+  <section class="pane">
+    <div class="pane-head">Rendered preview</div>
+    <div id="error"></div>
+    <div class="preview-scroll">
+      <div id="preview" class="paper" data-empty>Paste content on the left, then click &ldquo;Render preview&rdquo;.</div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var TAG_MAP = {
+    'block': 'div',
+    'table': 'table',
+    'table-column': 'col',
+    'table-header': 'thead',
+    'table-body': 'tbody',
+    'table-row': 'tr',
+    'table-cell': null /* resolved to th/td based on parent */
+  };
+
+  var SPAN_ATTRS = {
+    'number-rows-spanned': 'rowSpan',
+    'number-columns-spanned': 'colSpan'
+  };
+
+  var PT_PROPS = { 'font-size': 1, 'line-height': 1 };
+  var PX_PROPS = {
+    'margin-top': 1, 'margin-bottom': 1, 'margin-left': 1, 'margin-right': 1,
+    'padding': 1, 'padding-top': 1, 'padding-bottom': 1, 'padding-left': 1, 'padding-right': 1,
+    'border-width': 1, 'width': 1, 'height': 1
+  };
+
+  function normalizeValue(prop, value) {
+    if (/^-?\d+(\.\d+)?$/.test(value)) {
+      if (PT_PROPS[prop]) return value + 'pt';
+      if (PX_PROPS[prop]) return value + 'px';
+    }
+    return value;
+  }
+
+  function attrsToStyle(el) {
+    var style = '';
+    for (var i = 0; i < el.attributes.length; i++) {
+      var a = el.attributes[i];
+      var name = a.name.toLowerCase();
+      if (SPAN_ATTRS[name]) continue;
+      style += name + ': ' + normalizeValue(name, a.value) + '; ';
+    }
+    return style.trim();
+  }
+
+  function resolveOutTag(srcTag, parentSrcTag) {
+    if (srcTag === 'table-cell') {
+      return parentSrcTag === 'table-header' ? 'th' : 'td';
+    }
+    if (TAG_MAP.hasOwnProperty(srcTag)) return TAG_MAP[srcTag];
+    return null;
+  }
+
+  function convert(node, parentSrcTag) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.nodeValue.trim() === '' && node.nodeValue.indexOf('\n') !== -1
+        ? null
+        : document.createTextNode(node.nodeValue);
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return null;
+
+    var srcTag = node.tagName.toLowerCase();
+    var outTag = resolveOutTag(srcTag, parentSrcTag);
+    var known = outTag !== null;
+    if (!outTag) outTag = 'div';
+
+    var el = document.createElement(outTag);
+    if (!known) el.setAttribute('data-src-tag', srcTag);
+
+    var style = attrsToStyle(node);
+    if (style) el.setAttribute('style', style);
+
+    for (var i = 0; i < node.attributes.length; i++) {
+      var a = node.attributes[i];
+      var lname = a.name.toLowerCase();
+      if (SPAN_ATTRS[lname]) el.setAttribute(SPAN_ATTRS[lname] === 'rowSpan' ? 'rowspan' : 'colspan', a.value);
+      if (lname === 'width' && outTag === 'col') el.setAttribute('style', 'width:' + a.value + ';');
+    }
+
+    for (var c = 0; c < node.childNodes.length; c++) {
+      var child = convert(node.childNodes[c], srcTag);
+      if (child) el.appendChild(child);
+    }
+    return el;
+  }
+
+  function escapeStrayAmpersands(xml) {
+    return xml.replace(/&(?!#\d+;|#x[0-9a-fA-F]+;|[a-zA-Z]+;)/g, '&amp;');
+  }
+
+  function parseXml(raw) {
+    var wrapped = '<root>' + raw + '</root>';
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(wrapped, 'application/xml');
+    if (doc.getElementsByTagName('parsererror').length) {
+      var retryDoc = parser.parseFromString('<root>' + escapeStrayAmpersands(raw) + '</root>', 'application/xml');
+      if (!retryDoc.getElementsByTagName('parsererror').length) return retryDoc;
+      throw new Error(doc.getElementsByTagName('parsererror')[0].textContent.trim());
+    }
+    return doc;
+  }
+
+  function render() {
+    var raw = document.getElementById('input').value;
+    var preview = document.getElementById('preview');
+    var errorBox = document.getElementById('error');
+    errorBox.style.display = 'none';
+    errorBox.textContent = '';
+
+    if (!raw.trim()) {
+      preview.innerHTML = 'Paste content on the left, then click &ldquo;Render preview&rdquo;.';
+      preview.setAttribute('data-empty', '');
+      return;
+    }
+
+    try {
+      var doc = parseXml(raw);
+      var root = doc.documentElement;
+      var frag = document.createDocumentFragment();
+      for (var i = 0; i < root.childNodes.length; i++) {
+        var node = convert(root.childNodes[i], 'root');
+        if (node) frag.appendChild(node);
+      }
+      preview.innerHTML = '';
+      preview.removeAttribute('data-empty');
+      preview.appendChild(frag);
+    } catch (err) {
+      errorBox.textContent = 'Could not parse the pasted content as XML:\n' + err.message;
+      errorBox.style.display = 'block';
+    }
+  }
+
+  var SAMPLE = [
+    '<block font-size="6" font-family="Helvetica">',
+    '  <block font-weight="bold">Replacement Summary</block>',
+    '  <block margin-top="1em" font-size="6">',
+    '    <table table-layout="fixed" border-style="solid" border-width="1px">',
+    '      <table-column width="10%"/><table-column width="16%"/><table-column width="6%"/>',
+    '      <table-column width="6%"/><table-column width="7%"/><table-column width="7%"/>',
+    '      <table-column width="7%"/><table-column width="8%"/><table-column width="8%"/>',
+    '      <table-column width="11%"/><table-column width="8%"/>',
+    '      <table-header>',
+    '        <table-row background-color="#35A8DD" color="white">',
+    '          <table-cell>Terminated SKU</table-cell>',
+    '          <table-cell>Asset ID</table-cell>',
+    '          <table-cell>Purchased Qty</table-cell>',
+    '          <table-cell>Terminated Qty</table-cell>',
+    '          <table-cell>Surviving Quantity</table-cell>',
+    '          <table-cell>Original Quote</table-cell>',
+    '          <table-cell>Original Order #</table-cell>',
+    '          <table-cell>Original Start Date</table-cell>',
+    '          <table-cell>Original End Date</table-cell>',
+    '          <table-cell>Replacement Product</table-cell>',
+    '          <table-cell>Replacement Product Qty</table-cell>',
+    '        </table-row>',
+    '      </table-header>',
+    '      <table-body>',
+    '        <table-row>',
+    '          <table-cell>RBK-GO-FNDN-R6416</table-cell>',
+    '          <table-cell>AA212664160086</table-cell>',
+    '          <table-cell>6</table-cell>',
+    '          <table-cell>1</table-cell>',
+    '          <table-cell>5</table-cell>',
+    '          <table-cell>Q-130838</table-cell>',
+    '          <table-cell>22659</table-cell>',
+    '          <table-cell>2021-06-30</table-cell>',
+    '          <table-cell>2026-06-29</table-cell>',
+    '          <table-cell number-rows-spanned="2">RS-BT-FE-RSCG-PE-PP</table-cell>',
+    '          <table-cell number-rows-spanned="2">1020</table-cell>',
+    '        </table-row>',
+    '        <table-row>',
+    '          <table-cell>RS-BT-FE-PE-PP</table-cell>',
+    '          <table-cell>AA212664160086</table-cell>',
+    '          <table-cell>720</table-cell>',
+    '          <table-cell>120</table-cell>',
+    '          <table-cell>600</table-cell>',
+    '          <table-cell>Q-817252</table-cell>',
+    '          <table-cell>102504</table-cell>',
+    '          <table-cell>2026-06-30</table-cell>',
+    '          <table-cell>2030-10-01</table-cell>',
+    '        </table-row>',
+    '      </table-body>',
+    '    </table>',
+    '  </block>',
+    '  <block margin-top="1em">',
+    '    This Quote includes the replacement of one or more product(s) with one or more Replacement Product(s), as set forth above.',
+    '  </block>',
+    '</block>'
+  ].join('\n');
+
+  document.getElementById('renderBtn').addEventListener('click', render);
+  document.getElementById('clearBtn').addEventListener('click', function () {
+    document.getElementById('input').value = '';
+    render();
+  });
+  document.getElementById('sampleBtn').addEventListener('click', function () {
+    document.getElementById('input').value = SAMPLE;
+    render();
+  });
+
+  var debounce;
+  document.getElementById('input').addEventListener('input', function () {
+    clearTimeout(debounce);
+    debounce = setTimeout(render, 400);
+  });
+})();
+</script>
+
+</body>
+</html>

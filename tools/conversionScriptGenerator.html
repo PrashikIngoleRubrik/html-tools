@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FE/FUE → Scale EE Conversion Script Generator</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a;
+    --ink:#e6e9ef; --muted:#98a2b3; --accent:#00b4a0; --accent2:#3b82f6;
+    --warn:#f59e0b; --bad:#ef4444; --good:#22c55e;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  header{padding:18px 24px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#12141a,#171a21)}
+  header h1{margin:0;font-size:18px;letter-spacing:.2px}
+  header p{margin:4px 0 0;color:var(--muted);font-size:12.5px}
+  .wrap{max-width:1240px;margin:0 auto;padding:20px 24px 80px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:18px}
+  .card h2{margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+  .stepn{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#032c28;font-weight:700;align-items:center;justify-content:center;margin-right:8px;font-size:12px}
+  label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px}
+  input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit}
+  textarea{min-height:110px;font-family:var(--mono);font-size:12px;white-space:pre;overflow:auto}
+  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  .row4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  button{background:var(--accent);color:#032c28;border:0;border-radius:7px;padding:9px 16px;font-weight:600;font-size:13px;cursor:pointer}
+  button.secondary{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;align-items:center}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  td.mono,.mono{font-family:var(--mono)}
+  td input{padding:5px 7px;font-size:12px}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600}
+  .pill.create{background:#1c2b47;color:#8fb6ff}
+  .pill.update{background:#12331f;color:#8ef0ab}
+  .pill.miss{background:#3a2020;color:#ff9a9a}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:12px 14px}
+  .stat .n{font-size:20px;font-weight:700}
+  .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+  .chip{display:inline-flex;flex-direction:column;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:0 8px 8px 0}
+  .chip .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .chip .v{font-family:var(--mono);font-size:12.5px;margin-top:2px}
+  .chip.warn{border-color:#6b551f;background:#241d0c}
+  .valid{font-size:12px;padding:8px 12px;border-radius:7px;margin-top:8px}
+  .valid.ok{background:#12331f;color:#8ef0ab;border:1px solid #1f5a34}
+  .valid.no{background:#3a1d1d;color:#ffb0b0;border:1px solid #6b2b2b}
+  .hint{color:var(--muted);font-size:12px;margin:6px 0 0}
+  .warnbox{background:#332711;border:1px solid #6b551f;color:#f4d58a;border-radius:8px;padding:10px 12px;font-size:12.5px;margin-top:10px}
+  .qbox{position:relative;background:#0b0d11;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:6px 0 4px;font-family:var(--mono);font-size:12px;white-space:pre-wrap;word-break:break-word;color:#bfe3dd}
+  .qbox .copy-btn{position:absolute;top:8px;right:8px;padding:4px 10px;font-size:11px}
+  pre.out{background:#0b0d11;border:1px solid var(--line);border-radius:9px;padding:14px;max-height:560px;overflow:auto;font-family:var(--mono);font-size:12px;white-space:pre;color:#d6dae2}
+  .muted{color:var(--muted)}
+  .hidden{display:none}
+  a.tab{color:var(--accent2);cursor:pointer;text-decoration:underline}
+  .small{font-size:11.5px}
+  code{font-family:var(--mono);background:#0b0d11;padding:1px 5px;border-radius:4px}
+  details{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+  summary{cursor:pointer;color:var(--muted);font-size:12px;user-select:none}
+  .toggle{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+  .toggle input{width:auto}
+</style>
+</head>
+<body>
+<header>
+  <h1>FE/FUE → Scale EE Conversion Script Generator</h1>
+  <p>Self-contained: the SOQL is embedded (no separate file). Fill the quote, copy query 1, paste the result — the tool builds query 2/3 from it, derives all Ids, and emits a <b>minified</b> DRY_RUN Apex sized to avoid the Execute-Anonymous HTTP 431.</p>
+</header>
+
+<div class="wrap">
+
+  <!-- STEP 1: TICKET -->
+  <div class="card">
+    <h2><span class="stepn">1</span>Ticket inputs</h2>
+    <div class="row4">
+      <div><label>Quote name</label><input id="quoteName" value="Q-900312" /></div>
+      <div><label>Target EE-SC product code</label><input id="expCode" value="RS-BT-EE-SC-PE-PA" /></div>
+      <div><label>Expansion qty</label><input id="expQty" value="627" /></div>
+      <div><label>Term (months)</label><input id="term" value="36" /></div>
+    </div>
+    <div style="margin-top:12px"><label>Old lines being converted — QL Names (comma/space separated). Leave blank to take every non-EE-SC line the query returns.</label>
+      <input id="dispNames" value="QL-11655419, QL-11655420, QL-11655421, QL-11655802, QL-11655803" /></div>
+  </div>
+
+  <!-- STEP 2: QUERY 1 -->
+  <div class="card">
+    <h2><span class="stepn">2</span>Query 1 — quote lines</h2>
+    <p class="hint">Run this in your org (Dev Console / Inspector / <code>sf data query</code>), paste the JSON (or TSV) result below, then click Parse.</p>
+    <div class="qbox"><button class="secondary copy-btn" data-copy="q1">Copy</button><span id="q1"></span></div>
+    <label style="margin-top:8px">Paste query-1 result</label>
+    <textarea id="rawLines" placeholder="[ { &quot;Id&quot;:&quot;a6P...&quot;, &quot;Name&quot;:&quot;QL-11655419&quot;, ... } ]"></textarea>
+    <div class="btnrow">
+      <button id="parseBtn">Parse &amp; build queries 2–3</button>
+      <button class="secondary" id="sampleBtn">Load sample</button>
+      <span id="parseMsg" class="hint"></span>
+    </div>
+  </div>
+
+  <!-- STEP 3: QUERY 2/3 -->
+  <div class="card hidden" id="lookupCard">
+    <h2><span class="stepn">3</span>Queries 2 &amp; 3 — generated from query 1</h2>
+    <label>Query 2 — Entitlements (built from the CLI Ids found in query 1)</label>
+    <div class="qbox"><button class="secondary copy-btn" data-copy="q2">Copy</button><span id="q2"></span></div>
+    <textarea id="rawEnts" placeholder="Paste query-2 (Entitlement) result..."></textarea>
+
+    <div id="cliNamesWrap" class="hidden" style="margin-top:10px">
+      <label>No CLI Ids were on the lines — paste the ticket's subsumed CLI <b>Names</b> (BB…/AA…) to build query 2 by name:</label>
+      <input id="cliNames" placeholder="BB214364160071, BB214264160073, AA191964100099, ..." />
+    </div>
+
+    <label style="margin-top:12px">Query 3 — Scale-EE Product + PricebookEntry <span class="muted small">(only needed if the EE-SC line doesn't exist yet)</span></label>
+    <div class="qbox"><button class="secondary copy-btn" data-copy="q3">Copy</button><span id="q3"></span></div>
+    <textarea id="rawProd" style="min-height:70px" placeholder="Paste query-3 (Product2 / PricebookEntry) result — optional..."></textarea>
+    <div class="btnrow"><button id="buildBtn">Build plan</button><span id="buildMsg" class="hint"></span></div>
+  </div>
+
+  <!-- STEP 4: DERIVED + PLAN -->
+  <div class="card hidden" id="planCard">
+    <h2><span class="stepn">4</span>Auto-derived config &amp; plan</h2>
+    <div id="chips"></div>
+    <div class="cards" id="statCards" style="margin-top:6px"></div>
+
+    <h3 class="muted small" style="margin:16px 0 6px;text-transform:uppercase;letter-spacing:.5px">Disposition lines → "Do Not Renew - Converted"</h3>
+    <table id="dispTbl"><thead><tr>
+      <th>Op</th><th>QL / line Id</th><th>Product</th><th>CLI Id</th><th>Ent Id</th>
+      <th style="width:80px">Qty</th><th style="width:70px">Term</th><th style="width:90px">Row Id</th><th></th>
+    </tr></thead><tbody></tbody></table>
+
+    <h3 class="muted small" style="margin:18px 0 6px;text-transform:uppercase;letter-spacing:.5px">Expansion line → new Scale-EE</h3>
+    <table id="expTbl"><thead><tr>
+      <th style="width:40px">In</th><th>Ent Id</th><th>CLI Id</th><th>From line</th><th style="width:80px">Qty</th><th style="width:70px">Term</th><th style="width:90px">Row Id</th>
+    </tr></thead><tbody></tbody></table>
+    <div id="planValid"></div>
+
+    <details>
+      <summary>Advanced — override any derived value (rarely needed)</summary>
+      <div class="row4" style="margin-top:12px">
+        <div><label>Quote Id</label><input id="quoteId" /></div>
+        <div><label>Expansion group Id</label><input id="expGroupId" /></div>
+        <div><label>Disposition group Id</label><input id="dispGroupId" /></div>
+        <div><label>Existing EE-SC line Id (blank = create)</label><input id="expLineId" /></div>
+      </div>
+      <div class="row4" style="margin-top:12px">
+        <div><label>EE-SC Product Id</label><input id="expProductId" /></div>
+        <div><label>EE-SC PricebookEntry Id</label><input id="expPbeId" /></div>
+        <div><label>targetProductType (JSON)</label><select id="tpt"><option>Non-Hardware</option><option value="">(none)</option></select></div>
+        <div><label>Disposition reason (API)</label><select id="dispReason"><option value="Converted">Converted</option></select></div>
+      </div>
+    </details>
+  </div>
+
+  <!-- STEP 5: OUTPUT -->
+  <div class="card hidden" id="outCard">
+    <h2><span class="stepn">5</span>Generated Apex</h2>
+    <div class="warnbox">
+      <b>DRY_RUN = true</b> (simulates + rolls back). Review the log, set <code>DRY_RUN = false</code> to commit, then Calculate in the QLE. <b>Do NOT re-open the New Replacement (SMS UI)</b>.<br>
+      <b>HTTP 431 fix:</b> keep <b>Minified</b> on (Execute-Anonymous over GET has a small header limit), or run via <code>sf apex run -f file.apex</code> which has no such limit.
+    </div>
+    <div class="btnrow" style="margin:12px 0">
+      <label class="toggle"><input type="checkbox" id="minify" checked> Minified (avoids 431)</label>
+      <button id="genBtn">Generate / refresh</button>
+      <button class="secondary" id="copyBtn">Copy</button>
+      <button class="secondary" id="dlBtn">Download .apex</button>
+      <span id="sizeMsg" class="hint"></span>
+    </div>
+    <pre class="out" id="outApex">// build the plan, then generate</pre>
+  </div>
+
+  <!-- STEP 6: WRITEUP -->
+  <div class="card hidden" id="writeupCard">
+    <h2><span class="stepn">6</span>Ticket writeup</h2>
+    <div class="btnrow" style="margin-bottom:10px">
+      <button id="genWriteupBtn">Generate / refresh</button>
+      <button class="secondary" id="copyWriteupBtn">Copy</button>
+    </div>
+    <pre class="out" id="outWriteup">// generate to see the writeup</pre>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+
+const EXP_GROUP_NAME="Expansion Quote", DISP_GROUP_NAME="Disposition Quote";
+const QLI_FIELDS = "Id, Name, SBQQ__ProductCode__c, SBQQ__Product__c, SBQQ__Quote__c, SBQQ__Quote__r.Name, "
+  + "SBQQ__Quote__r.SBQQ__PriceBook__c, SBQQ__Group__c, SBQQ__Group__r.Name, SBQQ__Quantity__c, "
+  + "SBQQ__SubscriptionTerm__c, SBQQ__PricebookEntryId__c, Disposition_Reason__c, Special_Program__c, "
+  + "Replacement_Motion__c, SBQQSC__RenewedContractLine__c, Arroyo_Subsumed_Old_Contract_Line_Items__c, Replacement_Details__c";
+const ENT_FIELDS = "Id, Name, ContractLineItemId, ContractLineItem.Name, Product__r.ProductCode, "
+  + "Subscription_Term__c, StartDate, EndDate, AssetId, Asset.SerialNumber";
+
+let STATE = { lines:[], ents:[], prod:[], disp:[], exp:[], derived:{} };
+const $ = id => document.getElementById(id);
+const num = v => { const n = parseInt(String(v==null?"":v).replace(/[^\d-]/g,""),10); return isNaN(n)?0:n; };
+const esc = s => String(s==null?"":s);
+const uniq = arr => [...new Set(arr)];
+const val = id => ($(id).value||"").trim();
+const inClause = ids => ids.map(i=>`'${i}'`).join(", ");
+const tokenize = s => (s||"").split(/[\s,]+/).map(x=>x.trim()).filter(Boolean);
+
+// ---------- parse ----------
+function parseDump(text){
+  text=(text||"").trim(); if(!text) return [];
+  if(text[0]==="["||text[0]==="{"){ let d=JSON.parse(text); return Array.isArray(d)?d:[d]; }
+  const rows=text.split(/\r?\n/).filter(r=>r.trim().length);
+  const split=r=>r.split("\t").map(c=>{c=c.trim();if(c.startsWith('"')&&c.endsWith('"'))c=c.slice(1,-1);return c.replace(/""/g,'"');});
+  const header=split(rows[0]); const recs=[];
+  for(let i=1;i<rows.length;i++){const cells=split(rows[i]);const o={};header.forEach((h,idx)=>{if(h)o[h]=cells[idx];});recs.push(o);}
+  return recs;
+}
+function getPath(o,path){ if(o==null)return undefined; if(o[path]!=null)return o[path];
+  let cur=o; for(const p of path.split(".")){ if(cur==null)return undefined; cur=cur[p]; } return cur; }
+function parseRepl(v){ try{ return v?(typeof v==="string"?JSON.parse(v):v):null; }catch(e){ return null; } }
+
+function normLine(o){ return {
+  id:getPath(o,"Id"), name:getPath(o,"Name")||"",
+  code:getPath(o,"SBQQ__ProductCode__c")||getPath(o,"SBQQ__Product__r.Name")||"",
+  productId:getPath(o,"SBQQ__Product__c")||"", pbeId:getPath(o,"SBQQ__PricebookEntryId__c")||"",
+  quoteId:getPath(o,"SBQQ__Quote__c")||"", quoteName:getPath(o,"SBQQ__Quote__r.Name")||"",
+  pricebook:getPath(o,"SBQQ__Quote__r.SBQQ__PriceBook__c")||"",
+  groupId:getPath(o,"SBQQ__Group__c")||"", groupName:getPath(o,"SBQQ__Group__r.Name")||"",
+  qty:num(getPath(o,"SBQQ__Quantity__c")), term:num(getPath(o,"SBQQ__SubscriptionTerm__c")),
+  disposition:getPath(o,"Disposition_Reason__c")||"", renewedCli:getPath(o,"SBQQSC__RenewedContractLine__c")||"",
+  subsumed:(getPath(o,"Arroyo_Subsumed_Old_Contract_Line_Items__c")||"").split(",").map(s=>s.trim()).filter(Boolean),
+  repl:parseRepl(getPath(o,"Replacement_Details__c")) }; }
+function normEnt(o){ return {
+  entId:getPath(o,"Id"), cli:getPath(o,"ContractLineItemId")||"", cliName:getPath(o,"ContractLineItem.Name")||"",
+  code:getPath(o,"Product__r.ProductCode")||"", term:num(getPath(o,"Subscription_Term__c")), serial:getPath(o,"Asset.SerialNumber")||"" }; }
+function deriveProdPbe(recs){ let prod="",pbe="";
+  for(const r of recs){ for(const v of Object.values(r||{})){ const s=String(v==null?"":v);
+    if(!prod && /^01t[0-9A-Za-z]{12,15}$/.test(s)) prod=s;
+    if(!pbe  && /^01u[0-9A-Za-z]{12,15}$/.test(s)) pbe=s; } }
+  return {prod,pbe}; }
+
+// ---------- embedded queries ----------
+function renderQuery1(){
+  const q=val("quoteName")||"Q-XXXXXX"; const code=val("expCode");
+  const names=tokenize(val("dispNames"));
+  const nameClause = names.length? `Name IN (${inClause(names)})\n        OR ` : "";
+  $("q1").textContent =
+    `SELECT ${QLI_FIELDS}\nFROM SBQQ__QuoteLine__c\nWHERE SBQQ__Quote__r.Name = '${q}'\n  AND ( ${nameClause}SBQQ__ProductCode__c = '${code}' )\nORDER BY SBQQ__Group__r.SBQQ__Number__c NULLS FIRST, Name`;
+}
+function renderLookupQueries(){
+  const code=val("expCode");
+  // CLI ids harvested from query-1 lines (RenewedContractLine + Arroyo_Subsumed)
+  const clis = uniq(STATE.lines.filter(l=>l.code!==code)
+      .flatMap(l=>[l.renewedCli, ...l.subsumed]).filter(Boolean));
+  if(clis.length){
+    $("q2").textContent = `SELECT ${ENT_FIELDS}\nFROM Entitlement\nWHERE ContractLineItemId IN (${inClause(clis)})\nORDER BY ContractLineItem.Name`;
+    $("cliNamesWrap").classList.add("hidden");
+  } else {
+    // no CLIs on the lines -> offer by-name query
+    const names=tokenize(val("cliNames"));
+    const clause = names.length? inClause(names) : "'BB...','AA...'";
+    $("q2").textContent = `-- No CLI Ids on the lines; query by ContractLineItem Name (from the ticket):\nSELECT ${ENT_FIELDS}\nFROM Entitlement\nWHERE ContractLineItem.Name IN (${clause})\nORDER BY ContractLineItem.Name`;
+    $("cliNamesWrap").classList.remove("hidden");
+  }
+  const pb = (STATE.lines.find(l=>l.pricebook)||{}).pricebook || "<pricebookId from query 1>";
+  $("q3").textContent =
+    `-- Only if the ${code} line does not exist yet:\nSELECT Id, Name, ProductCode FROM Product2 WHERE ProductCode = '${code}';\nSELECT Id, Product2Id, Pricebook2Id, UnitPrice, IsActive\nFROM PricebookEntry WHERE Product2.ProductCode = '${code}' AND Pricebook2Id = '${pb}'`;
+}
+
+// ---------- derive ----------
+function deriveConfig(){
+  const expCode=val("expCode"); const L=STATE.lines;
+  const expLine=L.find(l=>l.code===expCode);
+  const groupBy=name=>(L.find(l=>l.groupName===name)||{}).groupId||"";
+  const d={
+    quoteId:(L.find(l=>l.quoteId)||{}).quoteId||"", quoteName:(L.find(l=>l.quoteName)||{}).quoteName||val("quoteName"),
+    pricebook:(L.find(l=>l.pricebook)||{}).pricebook||"",
+    expGroupId:groupBy(EXP_GROUP_NAME)||(expLine?expLine.groupId:""),
+    dispGroupId:groupBy(DISP_GROUP_NAME)||((L.find(l=>l.code!==expCode)||{}).groupId||""),
+    expLineId:expLine?(expLine.id||""):"", expProductId:expLine?expLine.productId:"",
+    expPbeId:expLine?expLine.pbeId:"", expQtyFromLine:expLine?expLine.qty:0, termFromLine:expLine?expLine.term:0 };
+  if((!d.expProductId||!d.expPbeId)&&STATE.prod.length){ const pp=deriveProdPbe(STATE.prod);
+    d.expProductId=d.expProductId||pp.prod; d.expPbeId=d.expPbeId||pp.pbe; }
+  STATE.derived=d;
+  const set=(id,v)=>{ if(v!=null&&v!=="")$(id).value=v; };
+  set("quoteId",d.quoteId); set("expGroupId",d.expGroupId); set("dispGroupId",d.dispGroupId);
+  set("expProductId",d.expProductId); set("expPbeId",d.expPbeId);
+  $("expLineId").value=d.expLineId;
+  if(d.expQtyFromLine)$("expQty").value=d.expQtyFromLine;
+  if(d.termFromLine)$("term").value=d.termFromLine;
+}
+
+// ---------- plan ----------
+function buildPlan(){
+  deriveConfig();
+  const expCode=val("expCode");
+  const filter=tokenize(val("dispNames")); const fset=new Set(filter);
+  const dispLines=STATE.lines.filter(l=>l.code!==expCode && (filter.length===0||fset.has(l.name)||fset.has(l.code)));
+  const entByCli=new Map(), entByCode=new Map();
+  for(const e of STATE.ents){ if(e.cli)entByCli.set(e.cli,e);
+    if(e.code){ if(!entByCode.has(e.code))entByCode.set(e.code,[]); entByCode.get(e.code).push(e); } }
+  const used=new Set();
+  const pick=l=>{
+    let entId=l.repl&&Array.isArray(l.repl.rowValues)&&l.repl.rowValues[0]?l.repl.rowValues[0].entId:"";
+    let cli=l.renewedCli||l.subsumed[0]||"";
+    if(!cli&&entId){const e=STATE.ents.find(x=>x.entId===entId);if(e)cli=e.cli;}
+    if(cli&&entByCli.has(cli)){const e=entByCli.get(cli);if(!entId)entId=e.entId;}
+    if((!entId||!cli)&&entByCode.has(l.code)){const c=entByCode.get(l.code).find(e=>!used.has(e.entId));if(c){entId=entId||c.entId;cli=cli||c.cli;}}
+    if(entId)used.add(entId); return {entId,cli};
+  };
+  const term0=num(val("term"));
+  STATE.disp=dispLines.map((l,i)=>{ const {entId,cli}=pick(l);
+    const r0=l.repl&&l.repl.rowValues&&l.repl.rowValues[0]?l.repl.rowValues[0]:{};
+    return {lineId:l.id||"",name:l.name||"",code:l.code||"",productId:l.productId||"",cli,entId,
+      qty:num(r0.selectedQty||l.qty),term:num(r0.selectedTerm||l.term||term0),rowId:(r0.rowId||((i+1)+".1.0")),include:true}; });
+  syncExp(); renderChips(); renderPlan();
+  ["planCard","outCard","writeupCard"].forEach(id=>$(id).classList.remove("hidden"));
+}
+function syncExp(){ const keep=new Map(STATE.exp.map(x=>[x.entId,x.include]));
+  STATE.exp=STATE.disp.map((d,i)=>({entId:d.entId,cli:d.cli,fromLine:d.name||d.code,qty:d.qty,term:d.term,
+    rowId:(i+1)+".1.0",include:keep.has(d.entId)?keep.get(d.entId):true})); }
+
+// ---------- render ----------
+function renderChips(){ const d=STATE.derived; const exists=!!val("expLineId");
+  const chip=(k,v,warn)=>`<span class="chip${warn?" warn":""}"><span class="k">${k}</span><span class="v">${esc(v)||"—"}</span></span>`;
+  $("chips").innerHTML=
+    chip("Quote",d.quoteName+(d.quoteId?" · "+d.quoteId.slice(0,6)+"…":""))+
+    chip("Expansion grp",(d.expGroupId||"(none)"),!d.expGroupId&&!exists)+
+    chip("Disposition grp",(d.dispGroupId||"(none)"),!d.dispGroupId)+
+    chip("Scale-EE line",exists?"UPDATE "+val("expLineId").slice(0,8)+"…":"CREATE")+
+    chip("EE-SC Product",(val("expProductId")||"(query 3)"),!val("expProductId"))+
+    chip("EE-SC PBE",(val("expPbeId")||"(query 3)"),!exists&&!val("expPbeId")); }
+function renderPlan(){
+  $("statCards").innerHTML=[["Disposition lines",STATE.disp.length],["Scale-EE line",val("expLineId")?"update":"create"],
+    ["Subsumed CLIs",uniq(STATE.exp.filter(e=>e.include&&e.cli).map(e=>e.cli)).length],
+    ["Expansion qty",num(val("expQty")).toLocaleString()],["Σ disp qty",STATE.disp.reduce((s,d)=>s+num(d.qty),0).toLocaleString()]]
+    .map(([l,n])=>`<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+  const dt=$("dispTbl").querySelector("tbody");
+  dt.innerHTML=STATE.disp.map((d,i)=>`<tr>
+    <td>${d.lineId?'<span class="pill update">update</span>':'<span class="pill create">create</span>'}</td>
+    <td class="mono small">${esc(d.name)}<br>${esc(d.lineId)||'<span class="pill miss">no Id</span>'}</td>
+    <td class="mono small">${esc(d.code)}</td>
+    <td><input class="mono small dCli" data-i="${i}" value="${esc(d.cli)}"></td>
+    <td><input class="mono small dEnt" data-i="${i}" value="${esc(d.entId)}"></td>
+    <td><input class="mono dQty" data-i="${i}" value="${d.qty}"></td>
+    <td><input class="mono dTerm" data-i="${i}" value="${d.term}"></td>
+    <td><input class="mono small dRow" data-i="${i}" value="${esc(d.rowId)}"></td>
+    <td><a class="tab dDel" data-i="${i}">x</a></td></tr>`).join("");
+  const bindD=(cls,key,parse)=>dt.querySelectorAll(cls).forEach(inp=>inp.addEventListener("input",e=>{
+    STATE.disp[+e.target.dataset.i][key]=parse?num(e.target.value):e.target.value.trim(); syncExp(); }));
+  bindD(".dCli","cli",false);bindD(".dEnt","entId",false);bindD(".dQty","qty",true);bindD(".dTerm","term",true);bindD(".dRow","rowId",false);
+  dt.querySelectorAll(".dDel").forEach(a=>a.addEventListener("click",e=>{STATE.disp.splice(+e.target.dataset.i,1);syncExp();renderPlan();}));
+  const et=$("expTbl").querySelector("tbody");
+  et.innerHTML=STATE.exp.map((x,i)=>`<tr>
+    <td><input type="checkbox" class="xIn" data-i="${i}" ${x.include?"checked":""}></td>
+    <td><input class="mono small xEnt" data-i="${i}" value="${esc(x.entId)}"></td>
+    <td><input class="mono small xCli" data-i="${i}" value="${esc(x.cli)}"></td>
+    <td class="small muted">${esc(x.fromLine)}</td>
+    <td><input class="mono xQty" data-i="${i}" value="${x.qty}"></td>
+    <td><input class="mono xTerm" data-i="${i}" value="${x.term}"></td>
+    <td><input class="mono small xRow" data-i="${i}" value="${esc(x.rowId)}"></td></tr>`).join("");
+  et.querySelectorAll(".xIn").forEach(c=>c.addEventListener("change",e=>{STATE.exp[+e.target.dataset.i].include=e.target.checked;renderPlan();}));
+  const bindX=(cls,key,parse)=>et.querySelectorAll(cls).forEach(inp=>inp.addEventListener("input",e=>{
+    STATE.exp[+e.target.dataset.i][key]=parse?num(e.target.value):e.target.value.trim(); }));
+  bindX(".xEnt","entId",false);bindX(".xCli","cli",false);bindX(".xQty","qty",true);bindX(".xTerm","term",true);bindX(".xRow","rowId",false);
+  validatePlan();
+}
+function validatePlan(){ const el=$("planValid");const msgs=[];let bad=false;const exists=!!val("expLineId");
+  if(STATE.disp.some(d=>!d.cli||!d.entId)){bad=true;msgs.push("⚠ some disposition rows missing CLI/Ent Id — check query 2");}
+  if(!val("expProductId")){bad=true;msgs.push("⚠ EE-SC Product Id not derived — paste query 3 or set in Advanced");}
+  if(!exists&&!val("expPbeId"))msgs.push("⚠ creating EE-SC line without PricebookEntry Id — pricing won't calc");
+  if(!exists&&!val("expGroupId")){bad=true;msgs.push("⚠ creating EE-SC line but no Expansion group Id");}
+  msgs.push(`Expansion qty ${num(val("expQty")).toLocaleString()} · Σ disp qty ${STATE.disp.reduce((s,d)=>s+num(d.qty),0).toLocaleString()} (informational)`);
+  el.className="valid "+(bad?"no":"ok");el.innerHTML=(bad?"✗ ":"✓ ")+msgs.join("<br>"); }
+
+// ---------- Apex ----------
+function aS(s){ return "'"+String(s==null?"":s).replace(/\\/g,"\\\\").replace(/'/g,"\\'")+"'"; }
+function mapLit(e){ return e.length? "\n        "+e.join(",\n        ")+"\n    " : ""; }
+function cfg(){
+  const disp=STATE.disp.filter(d=>d.lineId), dispNew=STATE.disp.filter(d=>!d.lineId);
+  const expRows=STATE.exp.filter(x=>x.include&&x.entId);
+  return { q:esc(val("quoteName"))||"(quote)", quoteId:val("quoteId"), expGroup:val("expGroupId"), dispGroup:val("dispGroupId"),
+    expCode:val("expCode"), expProd:val("expProductId"), expPbe:val("expPbeId"), expLineId:val("expLineId"),
+    expQty:num(val("expQty")), term:num(val("term")), reason:val("dispReason")||"Converted", tpt:$("tpt").value,
+    disp, dispNew, expRows, subsumed:uniq(expRows.map(x=>x.cli).filter(Boolean)) };
+}
+function generateApexPretty(){
+  const c=cfg();
+  const dLine=c.disp.map(d=>`${aS(d.lineId)} => ${aS(d.entId)}`), dCli=c.disp.map(d=>`${aS(d.lineId)} => ${aS(d.cli)}`),
+    dQty=c.disp.map(d=>`${aS(d.lineId)} => ${num(d.qty)}`), dTerm=c.disp.map(d=>`${aS(d.lineId)} => ${num(d.term)}`),
+    dRow=c.disp.map(d=>`${aS(d.lineId)} => ${aS(d.rowId)}`);
+  const xEnt=c.expRows.map(x=>aS(x.entId)).join(", "), xCli=c.expRows.map(x=>aS(x.cli)).join(", "),
+    xQty=c.expRows.map(x=>num(x.qty)).join(", "), xTerm=c.expRows.map(x=>num(x.term)).join(", "),
+    xRow=c.expRows.map(x=>aS(x.rowId)).join(", "), subs=c.subsumed.map(x=>aS(x)).join(", ");
+  const warnNew=c.dispNew.length?`\n *   NOTE: ${c.dispNew.length} line(s) had no Id and are skipped: ${c.dispNew.map(d=>d.name||d.code).join(", ")}`:"";
+  return `/**********************************************************************************************************
+ * Convert_FE_FUE_to_EE__${c.q}.apex   (generated)
+ *   ${c.disp.length} old line(s) -> Disposition (Disposition_Reason__c='Converted'); 1 Scale-EE line (${c.expCode})
+ *   in Expansion (Special_Program__c='Conversion') subsuming ${c.subsumed.length} CLI(s). Mirrors ReplacementQuoteLineCreation.${warnNew}
+ *   Backend only — do NOT re-open the New Replacement (SMS UI). DRY_RUN=true simulates + rolls back.
+ **********************************************************************************************************/
+final Boolean DRY_RUN = true;
+final String QUOTE_ID        = ${aS(c.quoteId)};
+final String EXP_GROUP_ID    = ${aS(c.expGroup)};
+final String DISP_GROUP_ID   = ${aS(c.dispGroup)};
+final String DISP_REASON     = ${aS(c.reason)};
+final String TARGET_PROD_TYPE= ${aS(c.tpt)};
+final Map<Id,Id>      DISP_ENT  = new Map<Id,Id>{${mapLit(dLine)}};
+final Map<Id,String>  DISP_CLI  = new Map<Id,String>{${mapLit(dCli)}};
+final Map<Id,Integer> DISP_QTY  = new Map<Id,Integer>{${mapLit(dQty)}};
+final Map<Id,Integer> DISP_TERM = new Map<Id,Integer>{${mapLit(dTerm)}};
+final Map<Id,String>  DISP_ROW  = new Map<Id,String>{${mapLit(dRow)}};
+final String  EXP_LINE_ID = ${aS(c.expLineId)};   // blank -> INSERT
+final String  EXP_PRODUCT = ${aS(c.expProd)};
+final String  EXP_PBE     = ${aS(c.expPbe)};
+final String  EXP_CODE    = ${aS(c.expCode)};
+final Integer EXP_QTY     = ${c.expQty};
+final Integer TERM        = ${c.term};
+final List<String>  EXP_SUBSUMED = new List<String>{ ${subs} };
+final List<String>  X_ENT  = new List<String>{ ${xEnt} };
+final List<String>  X_CLI  = new List<String>{ ${xCli} };
+final List<Integer> X_QTY  = new List<Integer>{ ${xQty} };
+final List<Integer> X_TERM = new List<Integer>{ ${xTerm} };
+final List<String>  X_ROW  = new List<String>{ ${xRow} };
+
+System.Savepoint sp = Database.setSavepoint();
+try {
+    List<SBQQ__QuoteLine__c> dispToUpdate = new List<SBQQ__QuoteLine__c>();
+    if (!DISP_ENT.isEmpty()) {
+        Map<Id,SBQQ__QuoteLine__c> dispMap = new Map<Id,SBQQ__QuoteLine__c>([
+            SELECT Id FROM SBQQ__QuoteLine__c WHERE Id IN :DISP_ENT.keySet()]);
+        if (dispMap.size() != DISP_ENT.size())
+            throw new HandledException('Expected ' + DISP_ENT.size() + ' disposition lines, found ' + dispMap.size());
+        for (Id lineId : DISP_ENT.keySet()) {
+            SBQQ__QuoteLine__c ql = dispMap.get(lineId);
+            ReplacementJson.RowDetail r = new ReplacementJson.RowDetail();
+            r.entId = DISP_ENT.get(lineId); r.rowId = DISP_ROW.get(lineId);
+            r.selectedQty = DISP_QTY.get(lineId); r.selectedTerm = DISP_TERM.get(lineId);
+            r.disposition = DISP_REASON; r.isMismatch = false;
+            r.selectedAsset = ''; r.selectedAssetList = new Map<String,String>();
+            ReplacementJson j = new ReplacementJson();
+            j.mode = 'Dispose'; j.renLine = false;
+            if (String.isNotBlank(TARGET_PROD_TYPE)) j.targetProductType = TARGET_PROD_TYPE;
+            j.rowValues = new List<ReplacementJson.RowDetail>{ r };
+            ql.Disposition_Reason__c = DISP_REASON;
+            ql.Replacement_Motion__c = 'Upgrade';
+            ql.SBQQSC__RenewedContractLine__c = (Id) DISP_CLI.get(lineId);
+            ql.Arroyo_Subsumed_Old_Contract_Line_Items__c = DISP_CLI.get(lineId);
+            ql.Replacement_Details__c = JSON.serialize(j);
+            if (String.isNotBlank(DISP_GROUP_ID)) ql.SBQQ__Group__c = DISP_GROUP_ID;
+            dispToUpdate.add(ql);
+        }
+    }
+    ReplacementJson ej = new ReplacementJson();
+    ej.mode = 'ManyTo1'; ej.skuSelected = EXP_PRODUCT; ej.skuSelectedName = EXP_CODE;
+    if (String.isNotBlank(TARGET_PROD_TYPE)) ej.targetProductType = TARGET_PROD_TYPE;
+    ej.rowValues = new List<ReplacementJson.RowDetail>();
+    for (Integer i = 0; i < X_ENT.size(); i++) {
+        ReplacementJson.RowDetail r = new ReplacementJson.RowDetail();
+        r.entId = X_ENT[i]; r.rowId = X_ROW[i]; r.selectedQty = X_QTY[i]; r.selectedTerm = X_TERM[i];
+        r.disposition = DISP_REASON; r.isMismatch = false;
+        r.selectedAsset = ''; r.selectedAssetList = new Map<String,String>();
+        ej.rowValues.add(r);
+    }
+    SBQQ__QuoteLine__c exp; Boolean expIsInsert = String.isBlank(EXP_LINE_ID);
+    if (!expIsInsert) { exp = [SELECT Id, SBQQ__Quote__c FROM SBQQ__QuoteLine__c WHERE Id = :EXP_LINE_ID]; }
+    else { exp = new SBQQ__QuoteLine__c(
+            SBQQ__Quote__c = QUOTE_ID, SBQQ__Product__c = EXP_PRODUCT, SBQQ__PricebookEntryId__c = EXP_PBE,
+            SBQQ__Group__c = EXP_GROUP_ID, SBQQ__Quantity__c = EXP_QTY,
+            RWD_Expected_Default_Quantity__c = EXP_QTY, SBQQ__SubscriptionTerm__c = TERM); }
+    exp.Special_Program__c = 'Conversion'; exp.Disposition_Reason__c = 'None'; exp.Replacement_Motion__c = 'Upgrade';
+    exp.SBQQ__Quantity__c = EXP_QTY;
+    exp.Arroyo_Subsumed_Old_Contract_Line_Items__c = String.join(EXP_SUBSUMED, ',');
+    exp.Replacement_Details__c = JSON.serialize(ej);
+
+    System.debug('Convert ${c.q}: disp=' + dispToUpdate.size() + ' exp=' + (expIsInsert?'INS':'UPD') + ' subsumed=' + EXP_SUBSUMED.size());
+    System.debug('EXP Replacement_Details__c = ' + exp.Replacement_Details__c);
+
+    SBQQ.TriggerControl.disable();
+    TriggerControls.disableQuoteTrigger = true; TriggerControls.disableQuoteLineTrigger = true;
+    try {
+        if (expIsInsert) insert exp; else update exp;
+        if (!dispToUpdate.isEmpty()) update dispToUpdate;
+    } finally {
+        SBQQ.TriggerControl.enable();
+        TriggerControls.disableQuoteTrigger = false; TriggerControls.disableQuoteLineTrigger = false;
+    }
+    if (DRY_RUN) { Database.rollback(sp); System.debug('DRY_RUN=true -> ROLLED BACK.'); }
+    else { System.debug('COMMITTED. Calculate in the QLE. Do NOT re-open the SMS UI.'); }
+} catch (Exception e) {
+    Database.rollback(sp);
+    System.debug('ERROR -> rolled back: ' + e.getMessage() + '\\n' + e.getStackTraceString());
+    throw e;
+}
+`;
+}
+function generateApexMin(){
+  const c=cfg();
+  const dLine=c.disp.map(d=>`${aS(d.lineId)}=>${aS(d.entId)}`).join(","), dCli=c.disp.map(d=>`${aS(d.lineId)}=>${aS(d.cli)}`).join(","),
+    dQty=c.disp.map(d=>`${aS(d.lineId)}=>${num(d.qty)}`).join(","), dTerm=c.disp.map(d=>`${aS(d.lineId)}=>${num(d.term)}`).join(","),
+    dRow=c.disp.map(d=>`${aS(d.lineId)}=>${aS(d.rowId)}`).join(",");
+  const xEnt=c.expRows.map(x=>aS(x.entId)).join(","), xCli=c.expRows.map(x=>aS(x.cli)).join(","),
+    xQty=c.expRows.map(x=>num(x.qty)).join(","), xTerm=c.expRows.map(x=>num(x.term)).join(","),
+    xRow=c.expRows.map(x=>aS(x.rowId)).join(","), subs=c.subsumed.map(x=>aS(x)).join(",");
+  return `// Convert_FE_FUE_to_EE ${c.q} (minified). DRY_RUN=true simulates+rolls back. Do NOT re-open SMS UI.
+Boolean DRY_RUN=true;String Q=${aS(c.quoteId)};String EG=${aS(c.expGroup)};String DG=${aS(c.dispGroup)};String RS=${aS(c.reason)};String TPT=${aS(c.tpt)};
+Map<Id,Id> DE=new Map<Id,Id>{${dLine}};Map<Id,String> DC=new Map<Id,String>{${dCli}};Map<Id,Integer> DQ=new Map<Id,Integer>{${dQty}};Map<Id,Integer> DT=new Map<Id,Integer>{${dTerm}};Map<Id,String> DR=new Map<Id,String>{${dRow}};
+String XL=${aS(c.expLineId)};String XP=${aS(c.expProd)};String XB=${aS(c.expPbe)};String XC=${aS(c.expCode)};Integer XQ=${c.expQty};Integer TM=${c.term};
+List<String> SU=new List<String>{${subs}};List<String> XE=new List<String>{${xEnt}};List<String> XCL=new List<String>{${xCli}};List<Integer> XQT=new List<Integer>{${xQty}};List<Integer> XTM=new List<Integer>{${xTerm}};List<String> XR=new List<String>{${xRow}};
+System.Savepoint sp=Database.setSavepoint();
+try{
+ List<SBQQ__QuoteLine__c> du=new List<SBQQ__QuoteLine__c>();
+ if(!DE.isEmpty()){Map<Id,SBQQ__QuoteLine__c> dm=new Map<Id,SBQQ__QuoteLine__c>([SELECT Id FROM SBQQ__QuoteLine__c WHERE Id IN :DE.keySet()]);
+  if(dm.size()!=DE.size()) throw new HandledException('found '+dm.size()+'/'+DE.size());
+  for(Id k:DE.keySet()){SBQQ__QuoteLine__c q=dm.get(k);
+   ReplacementJson.RowDetail r=new ReplacementJson.RowDetail();r.entId=DE.get(k);r.rowId=DR.get(k);r.selectedQty=DQ.get(k);r.selectedTerm=DT.get(k);r.disposition=RS;r.isMismatch=false;r.selectedAsset='';r.selectedAssetList=new Map<String,String>();
+   ReplacementJson j=new ReplacementJson();j.mode='Dispose';j.renLine=false;if(String.isNotBlank(TPT))j.targetProductType=TPT;j.rowValues=new List<ReplacementJson.RowDetail>{r};
+   q.Disposition_Reason__c=RS;q.Replacement_Motion__c='Upgrade';q.SBQQSC__RenewedContractLine__c=(Id)DC.get(k);q.Arroyo_Subsumed_Old_Contract_Line_Items__c=DC.get(k);q.Replacement_Details__c=JSON.serialize(j);if(String.isNotBlank(DG))q.SBQQ__Group__c=DG;du.add(q);}}
+ ReplacementJson ej=new ReplacementJson();ej.mode='ManyTo1';ej.skuSelected=XP;ej.skuSelectedName=XC;if(String.isNotBlank(TPT))ej.targetProductType=TPT;ej.rowValues=new List<ReplacementJson.RowDetail>();
+ for(Integer i=0;i<XE.size();i++){ReplacementJson.RowDetail r=new ReplacementJson.RowDetail();r.entId=XE[i];r.rowId=XR[i];r.selectedQty=XQT[i];r.selectedTerm=XTM[i];r.disposition=RS;r.isMismatch=false;r.selectedAsset='';r.selectedAssetList=new Map<String,String>();ej.rowValues.add(r);}
+ SBQQ__QuoteLine__c ex;Boolean ins=String.isBlank(XL);
+ if(!ins){ex=[SELECT Id FROM SBQQ__QuoteLine__c WHERE Id=:XL];}else{ex=new SBQQ__QuoteLine__c(SBQQ__Quote__c=Q,SBQQ__Product__c=XP,SBQQ__PricebookEntryId__c=XB,SBQQ__Group__c=EG,SBQQ__Quantity__c=XQ,RWD_Expected_Default_Quantity__c=XQ,SBQQ__SubscriptionTerm__c=TM);}
+ ex.Special_Program__c='Conversion';ex.Disposition_Reason__c='None';ex.Replacement_Motion__c='Upgrade';ex.SBQQ__Quantity__c=XQ;ex.Arroyo_Subsumed_Old_Contract_Line_Items__c=String.join(SU,',');ex.Replacement_Details__c=JSON.serialize(ej);
+ SBQQ.TriggerControl.disable();TriggerControls.disableQuoteTrigger=true;TriggerControls.disableQuoteLineTrigger=true;
+ try{if(ins)insert ex;else update ex;if(!du.isEmpty())update du;}finally{SBQQ.TriggerControl.enable();TriggerControls.disableQuoteTrigger=false;TriggerControls.disableQuoteLineTrigger=false;}
+ System.debug('exp='+(ins?'INS':'UPD')+' disp='+du.size()+' subsumed='+SU.size()+' | '+ex.Replacement_Details__c);
+ if(DRY_RUN){Database.rollback(sp);System.debug('DRY_RUN rolled back');}else{System.debug('COMMITTED - Calculate in QLE, do NOT re-open SMS UI');}
+}catch(Exception e){Database.rollback(sp);System.debug('ERR '+e.getMessage()+' '+e.getStackTraceString());throw e;}`;
+}
+function generateApex(){ return $("minify").checked ? generateApexMin() : generateApexPretty(); }
+
+// ---------- writeup ----------
+function joinNames(a){ if(!a.length)return"";if(a.length===1)return a[0];if(a.length===2)return a[0]+" and "+a[1];return a.slice(0,-1).join(", ")+", and "+a[a.length-1]; }
+function generateWriteup(){ const q=esc(val("quoteName"))||"(quote)",expCode=val("expCode"),expQty=num(val("expQty")),term=num(val("term"));
+  const dispNames=STATE.disp.map(d=>d.name||d.code), subsumed=uniq(STATE.exp.filter(x=>x.include&&x.cli).map(x=>x.cli)), expOp=val("expLineId")?"Updated":"Created";
+  return `WHAT: User requested converting the existing FE and FUE (and legacy EE) lines on Quote ${q} to a single Scale Enterprise Edition line (${expCode}, term ${term}, qty ${expQty.toLocaleString()}).
+
+WHY: The customer is consolidating those entitlements onto Scale EE. The old lines must be dispositioned as "Do Not Renew - Converted" and the new Scale-EE line placed in the Expansion group, with the replacement-framework linkage fields populated so the conversion reports correctly.
+
+HOW: Applied from the backend (framework fields mirror ReplacementQuoteLineCreation, so re-opening the New Replacement UI is not required):
+
+Disposition group — marked ${joinNames(dispNames)} as Do Not Renew - Converted, set Replacement_Motion = Upgrade, RenewedContractLine + Arroyo_Subsumed to each line's own old contract line, and rebuilt Replacement_Details__c (mode Dispose, disposition Converted).
+
+Expansion group — ${expOp} ${expCode} (qty ${expQty.toLocaleString()}, term ${term}) with Special_Program = Conversion, Disposition_Reason = None, Arroyo_Subsumed = the ${subsumed.length} subsumed contract line(s), and Replacement_Details__c (mode ManyTo1, one row per subsumed entitlement, disposition Converted).`;
+}
+
+// ---------- wiring ----------
+function refreshQ1(){ renderQuery1(); }
+["quoteName","expCode","dispNames"].forEach(id=>$(id).addEventListener("input",refreshQ1));
+$("cliNames").addEventListener("input",renderLookupQueries);
+$("parseBtn").addEventListener("click",()=>{ try{
+    STATE.lines=parseDump($("rawLines").value).map(normLine);
+    if(!STATE.lines.length) throw new Error("query-1 result is empty");
+    $("parseMsg").textContent=`Parsed ${STATE.lines.length} quote line(s). Now run queries 2–3.`;
+    renderLookupQueries(); $("lookupCard").classList.remove("hidden");
+  }catch(e){ $("parseMsg").innerHTML=`<span style="color:var(--bad)">Parse error: ${esc(e.message)}</span>`; } });
+$("buildBtn").addEventListener("click",()=>{ try{
+    STATE.ents=parseDump($("rawEnts").value).map(normEnt);
+    STATE.prod=parseDump($("rawProd").value);
+    $("buildMsg").textContent=`${STATE.ents.length} entitlement(s)${STATE.prod.length?", "+STATE.prod.length+" product/PBE row(s)":""}.`;
+    buildPlan();
+  }catch(e){ $("buildMsg").innerHTML=`<span style="color:var(--bad)">Parse error: ${esc(e.message)}</span>`; } });
+["expQty","term"].forEach(id=>$(id).addEventListener("input",()=>{ if(STATE.lines.length)buildPlan(); }));
+["expLineId","expProductId","expPbeId","expGroupId","dispGroupId","quoteId","tpt","dispReason"].forEach(id=>$(id).addEventListener("input",()=>{ if(STATE.lines.length){renderChips();renderPlan();} }));
+$("minify").addEventListener("change",()=>{ if(STATE.disp.length){ $("outApex").textContent=generateApex(); showSize(); } });
+function showSize(){ const n=$("outApex").textContent.length; $("sizeMsg").textContent=`${n.toLocaleString()} chars${n>7000&&$("minify").checked?" — still large; prefer sf apex run -f":""}`; }
+$("genBtn").addEventListener("click",()=>{ $("outApex").textContent=generateApex(); $("outWriteup").textContent=generateWriteup(); showSize(); });
+$("genWriteupBtn").addEventListener("click",()=>{ $("outWriteup").textContent=generateWriteup(); });
+document.querySelectorAll("[data-copy]").forEach(b=>b.addEventListener("click",()=>{ const t=$(b.dataset.copy).textContent; navigator.clipboard.writeText(t); const o=b.textContent;b.textContent="Copied ✓";setTimeout(()=>b.textContent=o,1200); }));
+$("copyBtn").addEventListener("click",()=>{ navigator.clipboard.writeText($("outApex").textContent); $("copyBtn").textContent="Copied ✓"; setTimeout(()=>$("copyBtn").textContent="Copy",1200); });
+$("copyWriteupBtn").addEventListener("click",()=>{ navigator.clipboard.writeText($("outWriteup").textContent); $("copyWriteupBtn").textContent="Copied ✓"; setTimeout(()=>$("copyWriteupBtn").textContent="Copy",1200); });
+$("dlBtn").addEventListener("click",()=>{ const blob=new Blob([$("outApex").textContent],{type:"text/plain"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download=`Convert_FE_FUE_to_EE_${(esc(val("quoteName"))||"quote").replace(/[^\w-]/g,"_")}${$("minify").checked?".min":""}.apex`;a.click(); });
+
+// ---------- sample ----------
+$("sampleBtn").addEventListener("click",()=>{ $("rawLines").value=SAMPLE_LINES; $("parseBtn").click();
+  $("rawEnts").value=SAMPLE_ENTS; $("rawProd").value=SAMPLE_PROD; $("buildBtn").click(); });
+const SAMPLE_LINES=JSON.stringify([
+ {Id:"a6PVI000000001AAA",Name:"QL-11655419","SBQQ__ProductCode__c":"RS-BT-FE-PE-PP","SBQQ__Product__c":"01tXX0000000FEAAA","SBQQ__Quote__c":"a0xVI0000000001AAA","SBQQ__Quote__r":{Name:"Q-900312","SBQQ__PriceBook__c":"01sXX0000000PBKAA"},"SBQQ__Group__c":"a2yVI0000000DISAAA","SBQQ__Group__r":{Name:"Disposition Quote"},"SBQQ__Quantity__c":240,"SBQQ__SubscriptionTerm__c":36,"SBQQSC__RenewedContractLine__c":"811VI00000J8UnoYAF",Arroyo_Subsumed_Old_Contract_Line_Items__c:"811VI00000J8UnoYAF",Replacement_Details__c:null},
+ {Id:"a6PVI000000002AAA",Name:"QL-11655420","SBQQ__ProductCode__c":"RS-BT-FE-PE-PP","SBQQ__Product__c":"01tXX0000000FEAAA","SBQQ__Quote__c":"a0xVI0000000001AAA","SBQQ__Group__c":"a2yVI0000000DISAAA","SBQQ__Group__r":{Name:"Disposition Quote"},"SBQQ__Quantity__c":315,"SBQQ__SubscriptionTerm__c":36,"SBQQSC__RenewedContractLine__c":"811VI00000J8UnrYAF",Arroyo_Subsumed_Old_Contract_Line_Items__c:"811VI00000J8UnrYAF",Replacement_Details__c:null},
+ {Id:"a6PVI000000003AAA",Name:"QL-11655421","SBQQ__ProductCode__c":"RS-BT-FUE-PE-PP","SBQQ__Product__c":"01tXX0000000FUEAA","SBQQ__Quote__c":"a0xVI0000000001AAA","SBQQ__Group__c":"a2yVI0000000DISAAA","SBQQ__Group__r":{Name:"Disposition Quote"},"SBQQ__Quantity__c":465,"SBQQ__SubscriptionTerm__c":36,"SBQQSC__RenewedContractLine__c":"811VI00000J8UnmYAF",Arroyo_Subsumed_Old_Contract_Line_Items__c:"811VI00000J8UnmYAF",Replacement_Details__c:null},
+ {Id:"a6PVI000000004AAA",Name:"QL-11655802","SBQQ__ProductCode__c":"RS-BT-EE-PE-PP","SBQQ__Product__c":"01tXX0000000EEPAA","SBQQ__Quote__c":"a0xVI0000000001AAA","SBQQ__Group__c":"a2yVI0000000DISAAA","SBQQ__Group__r":{Name:"Disposition Quote"},"SBQQ__Quantity__c":12,"SBQQ__SubscriptionTerm__c":12,"SBQQSC__RenewedContractLine__c":"811VI00000J8UnvYAF",Arroyo_Subsumed_Old_Contract_Line_Items__c:"811VI00000J8UnvYAF",Replacement_Details__c:null},
+ {Id:"a6PVI000000005AAA",Name:"QL-11655803","SBQQ__ProductCode__c":"RS-BT-EE-PE-PP","SBQQ__Product__c":"01tXX0000000EEPAA","SBQQ__Quote__c":"a0xVI0000000001AAA","SBQQ__Group__c":"a2yVI0000000DISAAA","SBQQ__Group__r":{Name:"Disposition Quote"},"SBQQ__Quantity__c":60,"SBQQ__SubscriptionTerm__c":12,"SBQQSC__RenewedContractLine__c":"811VI00000J8UnxYAF",Arroyo_Subsumed_Old_Contract_Line_Items__c:"811VI00000J8UnxYAF",Replacement_Details__c:null}
+],null,1);
+const SAMPLE_ENTS=JSON.stringify([
+ {Id:"550VI0000000001AAA",ContractLineItemId:"811VI00000J8UnoYAF","ContractLineItem":{Name:"BB214364160071"},"Product__r":{ProductCode:"RS-BT-FE-PE-PP"},Subscription_Term__c:36},
+ {Id:"550VI0000000002AAA",ContractLineItemId:"811VI00000J8UnrYAF","ContractLineItem":{Name:"BB214264160073"},"Product__r":{ProductCode:"RS-BT-FE-PE-PP"},Subscription_Term__c:36},
+ {Id:"550VI0000000003AAA",ContractLineItemId:"811VI00000J8UnmYAF","ContractLineItem":{Name:"AA191964100099"},"Product__r":{ProductCode:"RS-BT-FUE-PE-PP"},Subscription_Term__c:36},
+ {Id:"550VI0000000004AAA",ContractLineItemId:"811VI00000J8UnvYAF","ContractLineItem":{Name:"BB194164120003"},"Product__r":{ProductCode:"RS-BT-EE-PE-PP"},Subscription_Term__c:12},
+ {Id:"550VI0000000005AAA",ContractLineItemId:"811VI00000J8UnxYAF","ContractLineItem":{Name:"AA183964100145"},"Product__r":{ProductCode:"RS-BT-EE-PE-PP"},Subscription_Term__c:12}
+],null,1);
+const SAMPLE_PROD=JSON.stringify([{Id:"01tXX0000000EESCAA",ProductCode:"RS-BT-EE-SC-PE-PA"},{Id:"01uXX0000000EESCAA",Pricebook2Id:"01sXX0000000PBKAA",UnitPrice:627}],null,1);
+
+renderQuery1();
+</script>
+</body>
+</html>

@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>M365 / CPQ Consolidation Script Generator</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a;
+    --ink:#e6e9ef; --muted:#98a2b3; --accent:#00b4a0; --accent2:#3b82f6;
+    --warn:#f59e0b; --bad:#ef4444; --good:#22c55e;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  header{padding:18px 24px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#12141a,#171a21)}
+  header h1{margin:0;font-size:18px;letter-spacing:.2px}
+  header p{margin:4px 0 0;color:var(--muted);font-size:12.5px}
+  .wrap{max-width:1200px;margin:0 auto;padding:20px 24px 80px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:18px}
+  .card h2{margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+  label{display:block;font-size:12px;color:var(--muted);margin:0 0 4px}
+  input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit}
+  textarea{min-height:150px;font-family:var(--mono);font-size:12px;white-space:pre;overflow:auto}
+  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+  .row3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  button{background:var(--accent);color:#032c28;border:0;border-radius:7px;padding:9px 16px;font-weight:600;font-size:13px;cursor:pointer}
+  button.secondary{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
+  button.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  td.mono,.mono{font-family:var(--mono)}
+  td input{padding:5px 7px;font-size:12px}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600}
+  .pill.user{background:#12333d;color:#5ee0cf}
+  .pill.stor{background:#1c2b47;color:#8fb6ff}
+  .pill.other{background:#2a2f3a;color:#9aa4b2}
+  .pill.churn{background:#3a2020;color:#ff9a9a}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:12px 14px}
+  .stat .n{font-size:22px;font-weight:700}
+  .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+  .valid{font-size:12px;padding:8px 12px;border-radius:7px;margin-top:8px}
+  .valid.ok{background:#12331f;color:#8ef0ab;border:1px solid #1f5a34}
+  .valid.no{background:#3a1d1d;color:#ffb0b0;border:1px solid #6b2b2b}
+  .hint{color:var(--muted);font-size:12px;margin:6px 0 0}
+  .warnbox{background:#332711;border:1px solid #6b551f;color:#f4d58a;border-radius:8px;padding:10px 12px;font-size:12.5px;margin-top:10px}
+  pre.out{background:#0b0d11;border:1px solid var(--line);border-radius:9px;padding:14px;max-height:520px;overflow:auto;font-family:var(--mono);font-size:12px;white-space:pre;color:#d6dae2}
+  .muted{color:var(--muted)}
+  .hidden{display:none}
+  .flexcol{display:flex;flex-direction:column;gap:4px}
+  a.tab{color:var(--accent2);cursor:pointer;text-decoration:underline}
+  .small{font-size:11.5px}
+</style>
+</head>
+<body>
+<header>
+  <h1>M365 / CPQ Consolidation Script Generator</h1>
+  <p>Paste the quote-line dump for a merge/consolidation ticket, review the auto-built plan, and generate the anonymous Apex (DRY_RUN-guarded). Works with the New Replacement / SMS UI framework fields.</p>
+</header>
+
+<div class="wrap">
+
+  <!-- STEP 1: INPUT -->
+  <div class="card">
+    <h2>1 · Ticket &amp; data</h2>
+    <div class="row">
+      <div><label>Quote name (for the script header)</label><input id="quoteName" placeholder="Q-899962" /></div>
+      <div><label>User SKU pattern (regex, tested on ProductName)</label><input id="userPat" value="^RS-UR.*-MS-" /></div>
+      <div><label>Storage SKU pattern (regex)</label><input id="storPat" value="^RS-GB-MS" /></div>
+    </div>
+    <div style="margin-top:12px">
+      <label>Quote-line data — paste the JSON array (REST/Workbench) <b>or</b> the tab-separated export. Must include Id, Name, SBQQ__ProductName__c, SBQQ__Quantity__c, Arroyo_Subsumed_Old_Contract_Line_Items__c, Disposition_Reason__c, Replacement_Details__c.</label>
+      <textarea id="rawData" placeholder="[ { &quot;Id&quot;: &quot;a6P...&quot;, &quot;SBQQ__ProductName__c&quot;: &quot;RS-UR-FE-MS-PE-PP&quot;, ... } ]   — or —   tab-separated rows"></textarea>
+    </div>
+    <div class="btnrow">
+      <button id="parseBtn">Parse data</button>
+      <button class="secondary" id="sampleBtn">Load sample (Ticket&nbsp;1)</button>
+      <span id="parseMsg" class="hint"></span>
+    </div>
+  </div>
+
+  <!-- STEP 2: SUMMARY + TARGETS -->
+  <div class="card hidden" id="summaryCard">
+    <h2>2 · Parsed summary</h2>
+    <div class="cards" id="statCards"></div>
+    <div class="row3" style="margin-top:14px">
+      <div><label>Target renewed user total</label><input id="targetRenew" type="text" /></div>
+      <div><label>Target storage total (pinned, decoupled)</label><input id="targetStorage" type="text" /></div>
+      <div><label>Churn disposition reason</label>
+        <select id="churnReason"><option>Churn</option><option>At Risk</option><option>Renew Later</option></select>
+      </div>
+    </div>
+    <div id="otherLines" class="hint"></div>
+  </div>
+
+  <!-- STEP 3: RENEW PLAN -->
+  <div class="card hidden" id="renewCard">
+    <h2>3 · Renew plan (per user entitlement)</h2>
+    <p class="hint">Edit the renewed quantity per entitlement. The remainder becomes churn. Use auto-distribute to trim from the largest entitlements down to the target.</p>
+    <div class="btnrow" style="margin-bottom:8px">
+      <button class="ghost" id="autoDistBtn">Auto-distribute churn to hit target</button>
+      <button class="secondary" id="resetRenewBtn">Reset (renew all)</button>
+    </div>
+    <table id="renewTbl"><thead><tr>
+      <th>Ent Id</th><th>Row Id</th><th>Source line</th><th>CLI</th><th>Current</th><th style="width:120px">Renew qty</th><th>Churn</th>
+    </tr></thead><tbody></tbody></table>
+    <div id="renewValid"></div>
+  </div>
+
+  <!-- STEP 4: CHURN PLAN -->
+  <div class="card hidden" id="churnCard">
+    <h2>4 · Churn plan → Disposition tab (CPQ_Disposition_Quote_Line__c)</h2>
+    <p class="hint">Auto-built from user reductions above + any <span class="pill churn">Churn / At Risk</span> rows already embedded in the pasted JSON. Editable. Each row becomes one disposition record using the consolidated user SKU.</p>
+    <table id="churnTbl"><thead><tr>
+      <th>Ent Id</th><th>CLI (RenewedContractLine = first token)</th><th style="width:120px">Churn qty</th><th>Source</th><th></th>
+    </tr></thead><tbody></tbody></table>
+    <div class="btnrow"><button class="secondary" id="addChurnBtn">+ Add churn row</button></div>
+    <div id="churnValid"></div>
+  </div>
+
+  <!-- STEP 5: OUTPUT -->
+  <div class="card hidden" id="outCard">
+    <h2>5 · Generated Apex</h2>
+    <div class="warnbox">
+      Runs with <b>DRY_RUN = true</b> (simulates + rolls back). Review the debug log, then set <code>DRY_RUN = false</code> to commit.
+      After committing, recalc pricing in the QLE. <b>Do not re-open the New Replacement (SMS UI)</b> on this quote — it rebuilds the JSON and re-derives storage, undoing the pin.
+    </div>
+    <div class="btnrow" style="margin:12px 0">
+      <button id="genBtn">Generate / refresh script</button>
+      <button class="secondary" id="copyBtn">Copy</button>
+      <button class="secondary" id="dlBtn">Download .apex</button>
+    </div>
+    <pre class="out" id="outApex">// generate to see the script</pre>
+  </div>
+
+  <!-- STEP 6: WRITEUP -->
+  <div class="card hidden" id="writeupCard">
+    <h2>6 · Ticket writeup (WHAT / WHY / HOW)</h2>
+    <div class="btnrow" style="margin-bottom:10px">
+      <button id="genWriteupBtn">Generate / refresh writeup</button>
+      <button class="secondary" id="copyWriteupBtn">Copy</button>
+      <button class="secondary" id="dlWriteupBtn">Download .md</button>
+    </div>
+    <pre class="out" id="outWriteup">// generate to see the writeup</pre>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+
+// ------------------------------------------------------------ state
+let STATE = { lines:[], userEnts:[], churn:[], userMasterId:null, storageMasterId:null,
+              userLineIds:[], storageLineIds:[] };
+const DISPOSE_REASONS = new Set(["Churn","At Risk","Renew Later"]);
+const $ = id => document.getElementById(id);
+const num = v => { const n = parseInt(String(v==null?"":v).replace(/[^\d-]/g,""),10); return isNaN(n)?0:n; };
+const esc = s => String(s==null?"":s);
+
+// ------------------------------------------------------------ parsing
+function parseInput(text){
+  text = text.trim();
+  if(!text) throw new Error("No data pasted.");
+  // Try JSON array first
+  if(text[0]==="[" || text[0]==="{"){
+    let data = JSON.parse(text);
+    if(!Array.isArray(data)) data = [data];
+    return data.map(normalizeRecord);
+  }
+  // Otherwise treat as tab-separated with a header row
+  const rows = text.split(/\r?\n/).filter(r=>r.trim().length);
+  const split = r => r.split("\t").map(cell=>{
+    let c = cell.trim();
+    if(c.startsWith('"') && c.endsWith('"')) c = c.slice(1,-1);
+    return c.replace(/""/g,'"');            // un-double quotes
+  });
+  const header = split(rows[0]);
+  const recs = [];
+  for(let i=1;i<rows.length;i++){
+    const cells = split(rows[i]);
+    const obj = {};
+    header.forEach((h,idx)=>{ if(h) obj[h]=cells[idx]; });
+    recs.push(normalizeRecord(obj));
+  }
+  return recs;
+}
+
+function normalizeRecord(o){
+  const repl = o.Replacement_Details__c;
+  let parsed = null;
+  try{ parsed = repl ? (typeof repl==="string"? JSON.parse(repl): repl) : null; }catch(e){ parsed=null; }
+  return {
+    id:   o.Id,
+    name: o.Name,
+    product: o.SBQQ__ProductName__c || o.SBQQ__ProductCode__c || "",
+    qty:  num(o.SBQQ__Quantity__c),
+    clis: (o.Arroyo_Subsumed_Old_Contract_Line_Items__c||"").split(",").map(s=>s.trim()).filter(Boolean),
+    disposition: o.Disposition_Reason__c || "",
+    repl: parsed
+  };
+}
+
+// ------------------------------------------------------------ classify + analyze
+function analyze(){
+  const userRe = new RegExp($("userPat").value.trim(), "i");
+  const storRe = new RegExp($("storPat").value.trim(), "i");
+
+  const userLines=[], storageLines=[], otherLines=[];
+  for(const l of STATE.lines){
+    if(userRe.test(l.product)) userLines.push(l);
+    else if(storRe.test(l.product)) storageLines.push(l);
+    else otherLines.push(l);
+  }
+
+  // flatten rows (positional CLI mapping) from user + storage lines
+  const userEntMap = new Map();     // entId -> {entId,rowId,qty,cli,lineId,lineName}
+  const churnMap   = new Map();     // entId -> {entId,qty,cli,source}
+  const addFromLine = (l, isUser) => {
+    if(!l.repl || !Array.isArray(l.repl.rowValues)) return;
+    l.repl.rowValues.forEach((r,idx)=>{
+      const cli = l.clis[idx] || l.clis[0] || "";
+      const entId = r.entId;
+      if(!entId) return;
+      if(DISPOSE_REASONS.has(r.disposition)){
+        if(!churnMap.has(entId)) churnMap.set(entId, {entId, qty:num(r.selectedQty), cli, source:"embedded"});
+      } else if(isUser){
+        if(!userEntMap.has(entId))
+          userEntMap.set(entId, {entId, rowId:r.rowId||"", qty:num(r.selectedQty), cli,
+                                 lineId:l.id, lineName:l.name});
+      }
+    });
+  };
+  userLines.forEach(l=>addFromLine(l,true));
+  storageLines.forEach(l=>addFromLine(l,false));
+
+  // masters = largest-qty line on each side
+  const pickMaster = arr => arr.slice().sort((a,b)=>b.qty-a.qty)[0];
+  const uMaster = pickMaster(userLines);
+  const sMaster = pickMaster(storageLines);
+
+  STATE.userLines = userLines; STATE.storageLines = storageLines; STATE.otherLines = otherLines;
+  STATE.userEnts = [...userEntMap.values()].map(e=>({...e, renew:e.qty}));  // default: renew all
+  STATE.userMasterId = uMaster ? uMaster.id : null;
+  STATE.storageMasterId = sMaster ? sMaster.id : null;
+  STATE.userLineIds = userLines.map(l=>l.id);
+  STATE.storageLineIds = storageLines.map(l=>l.id);
+  STATE.embeddedChurn = [...churnMap.values()];
+
+  const userTotal = STATE.userEnts.reduce((s,e)=>s+e.qty,0);
+  const storageTotal = storageLines.reduce((s,l)=>s+l.qty,0);
+
+  renderSummary(userTotal, storageTotal);
+  $("targetRenew").value = userTotal;
+  $("targetStorage").value = storageTotal;
+  rebuildChurn();
+  renderRenew();
+  showSteps();
+}
+
+// ------------------------------------------------------------ rendering
+function renderSummary(userTotal, storageTotal){
+  $("statCards").innerHTML = [
+    ["User lines", STATE.userLines.length],
+    ["User entitlements", STATE.userEnts.length],
+    ["Total users", userTotal.toLocaleString()],
+    ["Storage lines", STATE.storageLines.length],
+    ["Total storage", storageTotal.toLocaleString()],
+    ["Other lines (left alone)", STATE.otherLines.length],
+  ].map(([l,n])=>`<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+
+  const um = STATE.lines.find(l=>l.id===STATE.userMasterId);
+  const sm = STATE.lines.find(l=>l.id===STATE.storageMasterId);
+  let o = `<div style="margin-top:12px">Masters kept &amp; updated: `+
+    `<span class="pill user">user → ${um?esc(um.name):"—"}</span> `+
+    `<span class="pill stor">storage → ${sm?esc(sm.name):"—"}</span></div>`;
+  if(STATE.otherLines.length){
+    o += `<div style="margin-top:8px" class="small">Untouched: `+
+      STATE.otherLines.map(l=>`<span class="pill other">${esc(l.name)} · ${esc(l.product)}</span>`).join(" ")+`</div>`;
+  }
+  $("otherLines").innerHTML = o;
+}
+
+function renderRenew(){
+  const tb = $("renewTbl").querySelector("tbody");
+  tb.innerHTML = STATE.userEnts.map((e,i)=>{
+    const churn = Math.max(0, e.qty - e.renew);
+    return `<tr>
+      <td class="mono">${esc(e.entId)}</td>
+      <td class="mono">${esc(e.rowId)}</td>
+      <td>${esc(e.lineName)}</td>
+      <td class="mono small">${esc(e.cli)}</td>
+      <td class="mono">${e.qty.toLocaleString()}</td>
+      <td><input type="text" data-i="${i}" class="renewInp mono" value="${e.renew}"></td>
+      <td class="mono" style="color:${churn>0?'#ff9a9a':'var(--muted)'}">${churn.toLocaleString()}</td>
+    </tr>`;
+  }).join("");
+  tb.querySelectorAll(".renewInp").forEach(inp=>inp.addEventListener("input",e=>{
+    STATE.userEnts[+e.target.dataset.i].renew = num(e.target.value);
+    renderRenew(); rebuildChurn();
+  }));
+  validateRenew();
+}
+
+function validateRenew(){
+  const target = num($("targetRenew").value);
+  const sum = STATE.userEnts.reduce((s,e)=>s+num(e.renew),0);
+  const el = $("renewValid");
+  const ok = sum===target;
+  el.className = "valid "+(ok?"ok":"no");
+  el.textContent = `Renewed sum = ${sum.toLocaleString()}  ${ok?"=":"≠"}  target ${target.toLocaleString()}`
+    + (ok?"  ✓":`  (off by ${(sum-target).toLocaleString()})`);
+}
+
+function rebuildChurn(){
+  // user reductions
+  const fromReductions = STATE.userEnts
+    .map(e=>({entId:e.entId, qty:Math.max(0,e.qty-num(e.renew)), cli:e.cli, source:"reduction"}))
+    .filter(r=>r.qty>0);
+  // embedded churn rows already in JSON (dedupe entId against reductions)
+  const seen = new Set(fromReductions.map(r=>r.entId));
+  const embedded = (STATE.embeddedChurn||[]).filter(r=>!seen.has(r.entId));
+  STATE.churn = [...fromReductions, ...embedded];
+  renderChurn();
+}
+
+function renderChurn(){
+  const tb = $("churnTbl").querySelector("tbody");
+  tb.innerHTML = STATE.churn.map((c,i)=>`<tr>
+      <td><input class="chEnt mono" data-i="${i}" value="${esc(c.entId)}"></td>
+      <td><input class="chCli mono small" data-i="${i}" value="${esc(c.cli)}"></td>
+      <td><input class="chQty mono" data-i="${i}" value="${c.qty}"></td>
+      <td>${c.source==="embedded"?'<span class="pill churn">embedded</span>':'<span class="pill other">reduction</span>'}</td>
+      <td><a class="tab chDel" data-i="${i}">remove</a></td>
+    </tr>`).join("");
+  const bind=(cls,key,parse)=>tb.querySelectorAll(cls).forEach(inp=>inp.addEventListener("input",e=>{
+    STATE.churn[+e.target.dataset.i][key]= parse? num(e.target.value): e.target.value.trim();
+    validateChurn();
+  }));
+  bind(".chEnt","entId",false); bind(".chCli","cli",false); bind(".chQty","qty",true);
+  tb.querySelectorAll(".chDel").forEach(a=>a.addEventListener("click",e=>{
+    STATE.churn.splice(+e.target.dataset.i,1); renderChurn();
+  }));
+  validateChurn();
+}
+
+function validateChurn(){
+  const sum = STATE.churn.reduce((s,c)=>s+num(c.qty),0);
+  const userTotal = STATE.userEnts.reduce((s,e)=>s+e.qty,0);
+  const target = num($("targetRenew").value);
+  const embeddedTotal = (STATE.embeddedChurn||[]).reduce((s,c)=>s+num(c.qty),0);
+  const expected = (userTotal - target) + embeddedTotal;   // reductions + embedded
+  const el = $("churnValid");
+  const ok = sum===expected;
+  el.className = "valid "+(ok?"ok":"no");
+  el.textContent = `Churn sum = ${sum.toLocaleString()}  ${ok?"=":"≠"}  expected ${expected.toLocaleString()} `
+    + `(reductions ${(userTotal-target).toLocaleString()} + embedded ${embeddedTotal.toLocaleString()})`;
+}
+
+function showSteps(){
+  ["summaryCard","renewCard","churnCard","outCard","writeupCard"].forEach(id=>$(id).classList.remove("hidden"));
+}
+
+// ------------------------------------------------------------ auto-distribute
+function autoDistribute(){
+  let target = num($("targetRenew").value);
+  const ents = STATE.userEnts;
+  const total = ents.reduce((s,e)=>s+e.qty,0);
+  if(target>=total){ ents.forEach(e=>e.renew=e.qty); renderRenew(); rebuildChurn(); return; }
+  let toCut = total - target;
+  // reset then trim from largest first
+  ents.forEach(e=>e.renew=e.qty);
+  const order = ents.slice().sort((a,b)=>b.qty-a.qty);
+  for(const e of order){
+    if(toCut<=0) break;
+    const cut = Math.min(e.renew, toCut);
+    e.renew -= cut; toCut -= cut;
+  }
+  renderRenew(); rebuildChurn();
+}
+
+// ------------------------------------------------------------ Apex generation
+function mapLit(entries){ return entries.length? "\n        "+entries.join(",\n        ")+"\n    " : ""; }
+
+function generateApex(){
+  const q = esc($("quoteName").value)||"(quote)";
+  const reason = $("churnReason").value;
+  const renewTotal = num($("targetRenew").value);
+  const storageTotal = num($("targetStorage").value);
+
+  const renewEnts = STATE.userEnts.filter(e=>num(e.renew)>0);
+  const renewMap = renewEnts.map(e=>`'${e.entId}' => ${num(e.renew)}`);
+  const churn = STATE.churn.filter(c=>c.entId && num(c.qty)>0);
+  const churnQty = churn.map(c=>`'${c.entId}' => ${num(c.qty)}`);
+  const churnCli = churn.map(c=>`'${c.entId}' => '${esc(c.cli)}'`);
+
+  const uIds = STATE.userLineIds.map(id=>`'${id}'`).join(",");
+  const sIds = STATE.storageLineIds.map(id=>`'${id}'`).join(",");
+  const churnTotal = churn.reduce((s,c)=>s+num(c.qty),0);
+
+  const tpl =
+`/**********************************************************************************************************
+ * Consolidate_M365_Lines__${q}.apex   (generated by consolidationScriptGenerator.html)
+ *
+ * Ticket target for ${q}:
+ *   - Consolidate user lines  -> 1 line, renewed total = ${renewTotal}
+ *   - Consolidate storage     -> 1 line, storage pinned at ${storageTotal} (decoupled from users)
+ *   - ${churnTotal} churned unit(s) -> Disposition tab (CPQ_Disposition_Quote_Line__c) as "${reason}"
+ *
+ * Keeps every SMS-framework field consistent:
+ *   user line SBQQ__Quantity__c == SUM(rowValues.selectedQty) == renewed total; Disposition matches JSON;
+ *   Arroyo_Subsumed = comma-join of all subsumed CLIs; dispose lines use the same mapping as
+ *   ReplacementQuoteLineCreation.generateCPQDisposeLine.
+ *
+ * >>> Backend only. Do NOT re-open the New Replacement (SMS UI) on this quote afterwards:
+ *     createNewQuoteLines() rebuilds Replacement_Details__c and re-derives storage, undoing the pin. <<<
+ *
+ * DRY_RUN = true -> simulates, logs, rolls back. Review the log, then set false to commit.
+ **********************************************************************************************************/
+final Boolean DRY_RUN      = true;
+final String  CHURN_REASON = '${reason}';
+
+final Id      USER_MASTER_ID    = '${STATE.userMasterId||""}';
+final Id      STORAGE_MASTER_ID = '${STATE.storageMasterId||""}';
+final Set<Id> USER_LINE_IDS     = new Set<Id>{ ${uIds} };
+final Set<Id> STORAGE_LINE_IDS  = new Set<Id>{ ${sIds} };
+
+// entId -> renewed user qty (only entitlements that keep > 0 renewing users)
+final Map<Id,Integer> RENEWED_USERS = new Map<Id,Integer>{${mapLit(renewMap)}};
+final Integer TARGET_USER_TOTAL    = ${renewTotal};
+final Integer TARGET_STORAGE_TOTAL = ${storageTotal};
+
+// churn -> Disposition tab.  entId -> qty  and  entId -> subsumed CLI
+final Map<Id,Integer> CHURN_QTY = new Map<Id,Integer>{${mapLit(churnQty)}};
+final Map<Id,String>  CHURN_CLI = new Map<Id,String>{${mapLit(churnCli)}};
+
+System.Savepoint sp = Database.setSavepoint();
+try {
+    Set<Id> allIds = new Set<Id>();
+    allIds.addAll(USER_LINE_IDS);
+    allIds.addAll(STORAGE_LINE_IDS);
+
+    Map<Id, SBQQ__QuoteLine__c> lines = new Map<Id, SBQQ__QuoteLine__c>([
+        SELECT Id, Name, SBQQ__Quote__c, SBQQ__Product__c, SBQQ__ProductCode__c,
+               SBQQ__PricebookEntryId__c, SBQQ__Quantity__c, Disposition_Reason__c,
+               Arroyo_Subsumed_Old_Contract_Line_Items__c, Replacement_Details__c
+        FROM SBQQ__QuoteLine__c WHERE Id IN :allIds
+    ]);
+    if (lines.size() != allIds.size())
+        throw new AuraHandledException('Expected ' + allIds.size() + ' lines, found ' + lines.size());
+
+    Integer sr = 0; for (Integer x : RENEWED_USERS.values()) sr += x;
+    System.assertEquals(TARGET_USER_TOTAL, sr, 'RENEWED_USERS must total ' + TARGET_USER_TOTAL);
+
+    SBQQ__QuoteLine__c userMaster    = lines.get(USER_MASTER_ID);
+    SBQQ__QuoteLine__c storageMaster = lines.get(STORAGE_MASTER_ID);
+    if (userMaster == null || storageMaster == null)
+        throw new AuraHandledException('User/Storage master line not found in query results.');
+    Id quoteId = userMaster.SBQQ__Quote__c;
+
+    // Index every source RowDetail by entId (pristine, before mutation) + collect CLIs per side.
+    Map<String, ReplacementJson.RowDetail> rowByEnt = new Map<String, ReplacementJson.RowDetail>();
+    Set<String> userCLIs = new Set<String>();
+    Set<String> storageCLIs = new Set<String>();
+    for (Id lid : USER_LINE_IDS) {
+        SBQQ__QuoteLine__c l = lines.get(lid);
+        ReplacementJson j = (ReplacementJson) JSON.deserialize(l.Replacement_Details__c, ReplacementJson.class);
+        if (j.rowValues != null) for (ReplacementJson.RowDetail r : j.rowValues)
+            if (r.entId != null && !rowByEnt.containsKey(r.entId)) rowByEnt.put(r.entId, r);
+        if (String.isNotBlank(l.Arroyo_Subsumed_Old_Contract_Line_Items__c))
+            userCLIs.addAll(l.Arroyo_Subsumed_Old_Contract_Line_Items__c.split(','));
+    }
+    for (Id lid : STORAGE_LINE_IDS) {
+        SBQQ__QuoteLine__c l = lines.get(lid);
+        ReplacementJson j = (ReplacementJson) JSON.deserialize(l.Replacement_Details__c, ReplacementJson.class);
+        if (j.rowValues != null) for (ReplacementJson.RowDetail r : j.rowValues)
+            if (r.entId != null && !rowByEnt.containsKey(r.entId)) rowByEnt.put(r.entId, r);
+        if (String.isNotBlank(l.Arroyo_Subsumed_Old_Contract_Line_Items__c))
+            storageCLIs.addAll(l.Arroyo_Subsumed_Old_Contract_Line_Items__c.split(','));
+    }
+
+    // Build the consolidated renewing rows (deep-copy each source row, set qty + Renewing).
+    List<ReplacementJson.RowDetail> renewRows = new List<ReplacementJson.RowDetail>();
+    for (Id entId : RENEWED_USERS.keySet()) {
+        ReplacementJson.RowDetail src = rowByEnt.get(entId);
+        if (src == null) throw new AuraHandledException('No source row for renew ent ' + entId);
+        ReplacementJson.RowDetail r = (ReplacementJson.RowDetail)
+            JSON.deserialize(JSON.serialize(src), ReplacementJson.RowDetail.class);
+        r.selectedQty = RENEWED_USERS.get(entId);
+        r.disposition = 'Renewing';
+        r.isMismatch  = false;
+        renewRows.add(r);
+    }
+
+    // 1. consolidated USER line
+    ReplacementJson uj = (ReplacementJson) JSON.deserialize(userMaster.Replacement_Details__c, ReplacementJson.class);
+    uj.rowValues = renewRows;
+    userMaster.Replacement_Details__c = JSON.serialize(uj);
+    userMaster.SBQQ__Quantity__c      = TARGET_USER_TOTAL;
+    userMaster.Disposition_Reason__c  = 'Renewing';
+    userMaster.Arroyo_Subsumed_Old_Contract_Line_Items__c = String.join(new List<String>(userCLIs), ',');
+
+    // 2. consolidated STORAGE line (rowValues mirror renew; qty pinned)
+    ReplacementJson sj = (ReplacementJson) JSON.deserialize(storageMaster.Replacement_Details__c, ReplacementJson.class);
+    sj.rowValues = (List<ReplacementJson.RowDetail>)
+        JSON.deserialize(JSON.serialize(renewRows), List<ReplacementJson.RowDetail>.class);
+    storageMaster.Replacement_Details__c = JSON.serialize(sj);
+    storageMaster.SBQQ__Quantity__c      = TARGET_STORAGE_TOTAL;
+    storageMaster.Disposition_Reason__c  = 'Renewing';
+    storageMaster.Arroyo_Subsumed_Old_Contract_Line_Items__c = String.join(new List<String>(storageCLIs), ',');
+
+    // 3. churn -> CPQ_Disposition_Quote_Line__c (one per churn entitlement)
+    List<CPQ_Disposition_Quote_Line__c> churnLines = new List<CPQ_Disposition_Quote_Line__c>();
+    for (Id entId : CHURN_QTY.keySet()) {
+        ReplacementJson.RowDetail src = rowByEnt.get(entId);
+        ReplacementJson cj = new ReplacementJson();
+        cj.targetProductType = 'Non-Hardware';
+        cj.mode = 'Dispose';
+        cj.renLine = false;
+        ReplacementJson.RowDetail cr;
+        if (src != null) cr = (ReplacementJson.RowDetail)
+            JSON.deserialize(JSON.serialize(src), ReplacementJson.RowDetail.class);
+        else { cr = new ReplacementJson.RowDetail(); cr.entId = entId; cr.selectedTerm = 12; }
+        cr.selectedQty = CHURN_QTY.get(entId);
+        cr.disposition = CHURN_REASON;
+        cr.isMismatch  = false;
+        cj.rowValues = new List<ReplacementJson.RowDetail>{ cr };
+
+        String cli = CHURN_CLI.containsKey(entId) ? CHURN_CLI.get(entId) : '';
+        Id renewedCli = String.isNotBlank(cli) ? (Id) cli.split(',')[0] : null;
+        churnLines.add(new CPQ_Disposition_Quote_Line__c(
+            Quote__c                                    = quoteId,
+            Disposition_Reason__c                       = CHURN_REASON,
+            Product__c                                  = userMaster.SBQQ__Product__c,
+            Quantity__c                                 = CHURN_QTY.get(entId),
+            Replacement_Detail__c                       = JSON.serialize(cj),   // singular field on this object
+            RenewedContractLine__c                      = renewedCli,
+            PricebookEntryId__c                         = userMaster.SBQQ__PricebookEntryId__c,
+            Arroyo_Subsumed_Old_Contract_Line_Items__c  = cli
+        ));
+    }
+
+    // 4. delete the non-master user/storage lines
+    List<SBQQ__QuoteLine__c> toDelete = new List<SBQQ__QuoteLine__c>();
+    for (Id lid : allIds)
+        if (lid != USER_MASTER_ID && lid != STORAGE_MASTER_ID)
+            toDelete.add(new SBQQ__QuoteLine__c(Id = lid));
+
+    System.debug('===== Consolidate ${q} (DRY_RUN=' + DRY_RUN + ') =====');
+    System.debug('Quote ' + quoteId + ' | userMaster qty->' + TARGET_USER_TOTAL + ' rows=' + renewRows.size()
+        + ' | storageMaster qty->' + TARGET_STORAGE_TOTAL + ' | churnLines=' + churnLines.size()
+        + ' | deleting=' + toDelete.size());
+    System.debug('userMaster.Replacement_Details__c = ' + userMaster.Replacement_Details__c);
+    for (CPQ_Disposition_Quote_Line__c c : churnLines)
+        System.debug('CHURN ' + c.Quantity__c + ' ' + c.Disposition_Reason__c + ' CLI=' + c.Arroyo_Subsumed_Old_Contract_Line_Items__c);
+
+    SBQQ.TriggerControl.disable();
+    TriggerControls.disableQuoteTrigger     = true;
+    TriggerControls.disableQuoteLineTrigger = true;
+    try {
+        update new List<SBQQ__QuoteLine__c>{ userMaster, storageMaster };
+        if (!churnLines.isEmpty()) insert churnLines;
+        if (!toDelete.isEmpty())   delete toDelete;
+    } finally {
+        SBQQ.TriggerControl.enable();
+        TriggerControls.disableQuoteTrigger     = false;
+        TriggerControls.disableQuoteLineTrigger = false;
+    }
+
+    if (DRY_RUN) {
+        Database.rollback(sp);
+        System.debug('DRY_RUN=true -> ROLLED BACK. Review, then set DRY_RUN=false to commit.');
+    } else {
+        System.debug('COMMITTED. Recalculate pricing in the QLE. Do NOT re-open the SMS UI on this quote.');
+    }
+} catch (Exception e) {
+    Database.rollback(sp);
+    System.debug('ERROR -> rolled back: ' + e.getMessage() + '\\n' + e.getStackTraceString());
+    throw e;
+}
+`;
+  return tpl;
+}
+
+// ------------------------------------------------------------ writeup (WHAT / WHY / HOW) — concise resolution note
+function joinNames(arr){
+  if(!arr.length) return "";
+  if(arr.length===1) return arr[0];
+  if(arr.length===2) return arr[0]+" and "+arr[1];
+  return arr.slice(0,-1).join(", ")+", and "+arr[arr.length-1];
+}
+
+function generateWriteup(){
+  const q = (esc($("quoteName").value)||"(quote)");
+  const userSku = STATE.userLines[0] ? STATE.userLines[0].product : "user SKU";
+  const storSku = STATE.storageLines[0] ? STATE.storageLines[0].product : "storage SKU";
+  const reason  = $("churnReason").value;
+  const fmt = n => n.toLocaleString();
+
+  const curUser = STATE.userEnts.reduce((s,e)=>s+e.qty,0);
+  const embedded = (STATE.embeddedChurn||[]).reduce((s,c)=>s+num(c.qty),0);
+  const origUser = curUser + embedded;                       // e.g. 8,590
+  const renew    = num($("targetRenew").value);              // e.g. 6,690
+  const churnTotal = STATE.churn.filter(c=>c.entId && num(c.qty)>0).reduce((s,c)=>s+num(c.qty),0);
+  const storage  = num($("targetStorage").value);
+
+  const uMaster = STATE.lines.find(l=>l.id===STATE.userMasterId);
+  const sMaster = STATE.lines.find(l=>l.id===STATE.storageMasterId);
+
+  // classify user lines: fully-churned whole lines are "moved to Disposition"; the rest are "removed"
+  const removedU = [], movedU = [];
+  let movedChurn = 0;
+  for(const l of STATE.userLines){
+    if(l.id===STATE.userMasterId) continue;
+    const ents = STATE.userEnts.filter(e=>e.lineId===l.id);
+    const lineRenew = ents.reduce((s,e)=>s+num(e.renew),0);
+    if(ents.length>0 && lineRenew===0){ movedU.push(l.name); movedChurn += ents.reduce((s,e)=>s+e.qty,0); }
+    else removedU.push(l.name);
+  }
+  const residualChurn = Math.max(0, churnTotal - movedChurn);   // partial reductions on master + embedded
+
+  // user SKU clause
+  const uParts = [`Updated ${uMaster?uMaster.name:"user master"} Qty to ${fmt(renew)}`];
+  if(removedU.length) uParts.push(`removed ${joinNames(removedU)}`);
+  if(movedU.length)   uParts.push(`moved ${joinNames(movedU)} to Disposition section and marked as ${reason}`);
+  if(residualChurn>0) uParts.push(`created a Disposition record for ${fmt(residualChurn)} unit(s) marked as ${reason}`);
+
+  // storage SKU clause
+  const removedS = STATE.storageLines.filter(l=>l.id!==STATE.storageMasterId).map(l=>l.name);
+  const sParts = [`Updated ${sMaster?sMaster.name:"storage master"} Qty to ${fmt(storage)}`];
+  if(removedS.length) sParts.push(`removed ${joinNames(removedS)}`);
+
+  const other = STATE.otherLines.length ? `\n\nLeft untouched (non-M365): ${STATE.otherLines.map(l=>l.name).join(", ")}.` : "";
+
+  return `WHAT: User requested consolidation of M365 lines on Quote ${q} — consolidate all storage quantity (${fmt(storage)}) into a single line, renew only ${fmt(renew)} user lines out of ${fmt(origUser)}, and mark the remaining ${fmt(churnTotal)} user lines as ${reason}.
+
+WHY: The quote had multiple lines for the same SKUs that needed to be consolidated into single lines with updated quantities as per the business requirement.
+
+HOW: Consolidated the following quote lines from the backend:
+
+${userSku}: ${uParts.join(", ")}
+${storSku}: ${sParts.join(", ")}${other}`;
+}
+
+// ------------------------------------------------------------ wiring
+$("parseBtn").addEventListener("click", ()=>{
+  try{
+    STATE.lines = parseInput($("rawData").value);
+    $("parseMsg").textContent = `Parsed ${STATE.lines.length} line(s).`;
+    analyze();
+  }catch(e){
+    $("parseMsg").innerHTML = `<span style="color:var(--bad)">Parse error: ${esc(e.message)}</span>`;
+  }
+});
+["userPat","storPat"].forEach(id=>$(id).addEventListener("change",()=>{ if(STATE.lines.length) analyze(); }));
+$("targetRenew").addEventListener("input", ()=>{ validateRenew(); validateChurn(); });
+$("targetStorage").addEventListener("input", ()=>{});
+$("churnReason").addEventListener("change", ()=>{});
+$("autoDistBtn").addEventListener("click", autoDistribute);
+$("resetRenewBtn").addEventListener("click", ()=>{ STATE.userEnts.forEach(e=>e.renew=e.qty); renderRenew(); rebuildChurn(); });
+$("addChurnBtn").addEventListener("click", ()=>{ STATE.churn.push({entId:"",qty:0,cli:"",source:"manual"}); renderChurn(); });
+$("genBtn").addEventListener("click", ()=>{ $("outApex").textContent = generateApex(); $("outWriteup").textContent = generateWriteup(); });
+$("genWriteupBtn").addEventListener("click", ()=>{ $("outWriteup").textContent = generateWriteup(); });
+$("copyWriteupBtn").addEventListener("click", ()=>{ navigator.clipboard.writeText($("outWriteup").textContent); $("copyWriteupBtn").textContent="Copied ✓"; setTimeout(()=>$("copyWriteupBtn").textContent="Copy",1200); });
+$("dlWriteupBtn").addEventListener("click", ()=>{
+  const blob = new Blob([$("outWriteup").textContent], {type:"text/markdown"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `Writeup_${(esc($("quoteName").value)||"quote").replace(/[^\w-]/g,"_")}.md`;
+  a.click();
+});
+$("copyBtn").addEventListener("click", ()=>{ navigator.clipboard.writeText($("outApex").textContent); $("copyBtn").textContent="Copied ✓"; setTimeout(()=>$("copyBtn").textContent="Copy",1200); });
+$("dlBtn").addEventListener("click", ()=>{
+  const blob = new Blob([$("outApex").textContent], {type:"text/plain"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `Consolidate_${(esc($("quoteName").value)||"quote").replace(/[^\w-]/g,"_")}.apex`;
+  a.click();
+});
+
+// ------------------------------------------------------------ sample (Ticket 1)
+$("sampleBtn").addEventListener("click", ()=>{
+  $("quoteName").value = "Q-899962";
+  $("rawData").value = SAMPLE;
+  $("parseBtn").click();
+  $("targetRenew").value = 1357; validateRenew();
+  autoDistribute();
+});
+const SAMPLE = JSON.stringify([
+ {Id:"a6PVN000006Ktky2AC",Name:"QL-11630139",SBQQ__ProductName__c:"RS-UR-FE-MS-PE-PP",SBQQ__Quantity__c:25,Arroyo_Subsumed_Old_Contract_Line_Items__c:"811VN000001zEwmYAE",Disposition_Reason__c:"Renewing",Replacement_Details__c:'{"targetProductType":"Non-Hardware","rowValues":[{"selectedTerm":12,"selectedQty":25,"rowId":"1.1.0","entId":"550VN00000bLc6kYAC","disposition":"Renewing"}],"mode":"Dispose"}'},
+ {Id:"a6PVN000006Ktkz2AC",Name:"QL-11630140",SBQQ__ProductName__c:"RS-GB-MS-PE-PP",SBQQ__Quantity__c:500,Arroyo_Subsumed_Old_Contract_Line_Items__c:"811VN000001zEwmYAE",Disposition_Reason__c:"Renewing",Replacement_Details__c:'{"targetProductType":"Non-Hardware","rowValues":[{"selectedTerm":12,"selectedQty":25,"rowId":"1.1.0","entId":"550VN00000bLc6kYAC","disposition":"Renewing"}],"mode":"Dispose"}'},
+ {Id:"a6PVN000006Ktl02AC",Name:"QL-11630141",SBQQ__ProductName__c:"RS-UR-FE-MS-PE-PP",SBQQ__Quantity__c:361,Arroyo_Subsumed_Old_Contract_Line_Items__c:"811VN000001zEwkYAE",Disposition_Reason__c:"Renewing",Replacement_Details__c:'{"targetProductType":"Non-Hardware","rowValues":[{"selectedTerm":12,"selectedQty":361,"rowId":"2.1.0","entId":"550VN00000bLc6iYAC","disposition":"Renewing"}],"mode":"Dispose"}'},
+ {Id:"a6PVN000006Ktl12AC",Name:"QL-11630142",SBQQ__ProductName__c:"RS-GB-MS-PE-PP",SBQQ__Quantity__c:18050,Arroyo_Subsumed_Old_Contract_Line_Items__c:"811VN000001zEwkYAE",Disposition_Reason__c:"Renewing",Replacement_Details__c:'{"targetProductType":"Non-Hardware","rowValues":[{"selectedTerm":12,"selectedQty":361,"rowId":"2.1.0","entId":"550VN00000bLc6iYAC","disposition":"Renewing"}],"mode":"Dispose"}'},
+ {Id:"a6PVN000006Ktl22AC",Name:"QL-11630143",SBQQ__ProductName__c:"RS-UR-FE-MS-PE-PP",SBQQ__Quantity__c:20,Arroyo_Subsumed_Old_Contract_Line_Items__c:"811VN000001zEwoYAE",Disposition_Reason__c:"Renewing",Replacement_Details__c:'{"targetProductType":"Non-Hardware","rowValues":[{"selectedTerm":12,"selectedQty":20,"rowId":"3.1.0","entId":"550VN00000bLc6mYAC","disposition":"Renewing"}],"mode":"Dispose"}'},
+ {Id:"a6PVN000006Ktl32AC",Name:"QL-11630144",SBQQ__ProductName__c:"RS-GB-MS-PE-PP",SBQQ__Quantity__c:1000,Arroyo_Subsumed_Old_Contract_Line_Items__c:"811VN000001zEwoYAE",Disposition_Reason__c:"Renewing",Replacement_Details__c:'{"targetProductType":"Non-Hardware","rowValues":[{"selectedTerm":12,"selectedQty":20,"rowId":"3.1.0","entId":"550VN00000bLc6mYAC","disposition":"Renewing"}],"mode":"Dispose"}'},
+ {Id:"a6PVN000006Ktl42AC",Name:"QL-11630145",SBQQ__ProductName__c:"RS-UR-FE-MS-PE-PP",SBQQ__Quantity__c:1620,Arroyo_Subsumed_Old_Contract_Line_Items__c:"811VN000001zEwlYAE",Disposition_Reason__c:"Renewing",Replacement_Details__c:'{"targetProductType":"Non-Hardware","rowValues":[{"selectedTerm":12,"selectedQty":1620,"rowId":"4.1.0","entId":"550VN00000bLc6jYAC","disposition":"Renewing"}],"mode":"Dispose"}'},
+ {Id:"a6PVN000006Ktl52AC",Name:"QL-11630146",SBQQ__ProductName__c:"RS-GB-MS-PE-PP",SBQQ__Quantity__c:32400,Arroyo_Subsumed_Old_Contract_Line_Items__c:"811VN000001zEwlYAE",Disposition_Reason__c:"Renewing",Replacement_Details__c:'{"targetProductType":"Non-Hardware","rowValues":[{"selectedTerm":12,"selectedQty":1620,"rowId":"4.1.0","entId":"550VN00000bLc6jYAC","disposition":"Renewing"}],"mode":"Dispose"}'},
+ {Id:"a6PVN000006Ktl62AC",Name:"QL-11630147",SBQQ__ProductName__c:"RS-UR-FE-MS-PE-PP",SBQQ__Quantity__c:10,Arroyo_Subsumed_Old_Contract_Line_Items__c:"811VN000001zEwnYAE",Disposition_Reason__c:"Renewing",Replacement_Details__c:'{"targetProductType":"Non-Hardware","rowValues":[{"selectedTerm":12,"selectedQty":10,"rowId":"6.1.0","entId":"550VN00000bLc6lYAC","disposition":"Renewing"}],"mode":"Dispose"}'},
+ {Id:"a6PVN000006Ktl72AC",Name:"QL-11630148",SBQQ__ProductName__c:"RS-GB-MS-PE-PP",SBQQ__Quantity__c:50,Arroyo_Subsumed_Old_Contract_Line_Items__c:"811VN000001zEwnYAE",Disposition_Reason__c:"Renewing",Replacement_Details__c:'{"targetProductType":"Non-Hardware","rowValues":[{"selectedTerm":12,"selectedQty":10,"rowId":"6.1.0","entId":"550VN00000bLc6lYAC","disposition":"Renewing"}],"mode":"Dispose"}'},
+ {Id:"a6PVN000006Ktkv2AC",Name:"QL-11630136",SBQQ__ProductName__c:"RS-BT-BE-PE-PP",SBQQ__Quantity__c:90,Arroyo_Subsumed_Old_Contract_Line_Items__c:"8118Y000000wzrGQAQ",Disposition_Reason__c:"Renewing",Replacement_Details__c:'{"targetProductType":"Hardware","rowValues":[{"selectedQty":90,"rowId":"5.1.0","entId":"5508Y000006jJtDQAU","disposition":"Renewing"}],"mode":"Dispose"}'}
+], null, 1);
+</script>
+</body>
+</html>
