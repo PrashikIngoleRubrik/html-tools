@@ -1,0 +1,984 @@
+<title>Recurring Ticket Playbook — CPQ / Salesforce KTLO</title>
+
+<style>
+  :root {
+    --bg: #f3f5f9;
+    --surface: #ffffff;
+    --surface-2: #eceff5;
+    --border: #d8dce5;
+    --border-soft: #e4e7ee;
+    --text: #191c24;
+    --text-dim: #5a6178;
+    --accent: #2f5fdb;
+    --accent-soft: #2f5fdb17;
+    --accent-text: #1f47ad;
+    --good: #1a8f4c;
+    --good-soft: #1a8f4c15;
+    --bad: #c9333c;
+    --bad-soft: #c9333c15;
+    --warn: #a06600;
+    --warn-soft: #a0660015;
+    --shadow: 0 1px 2px rgba(20, 24, 38, 0.06), 0 8px 24px rgba(20, 24, 38, 0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10131a;
+      --surface: #171b24;
+      --surface-2: #1c212c;
+      --border: #2b3040;
+      --border-soft: #232838;
+      --text: #e7eaf1;
+      --text-dim: #8b93a8;
+      --accent: #6a95ff;
+      --accent-soft: #6a95ff22;
+      --accent-text: #a9c1ff;
+      --good: #3ddc84;
+      --good-soft: #3ddc8420;
+      --bad: #ff6f6f;
+      --bad-soft: #ff6f6f20;
+      --warn: #ffbe4d;
+      --warn-soft: #ffbe4d1f;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #10131a;
+    --surface: #171b24;
+    --surface-2: #1c212c;
+    --border: #2b3040;
+    --border-soft: #232838;
+    --text: #e7eaf1;
+    --text-dim: #8b93a8;
+    --accent: #6a95ff;
+    --accent-soft: #6a95ff22;
+    --accent-text: #a9c1ff;
+    --good: #3ddc84;
+    --good-soft: #3ddc8420;
+    --bad: #ff6f6f;
+    --bad-soft: #ff6f6f20;
+    --warn: #ffbe4d;
+    --warn-soft: #ffbe4d1f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  code, .mono, .id, input, textarea, select, button {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+
+  .app {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 28px 20px 80px;
+  }
+
+  header.top {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .eyebrow .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  h1 {
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+    font-size: clamp(22px, 3vw, 30px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 2px 0 4px;
+    text-wrap: balance;
+  }
+
+  header.top p {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 14.5px;
+    max-width: 68ch;
+    line-height: 1.55;
+  }
+
+  nav.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav.tabs button {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    padding: 10px 14px 12px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  nav.tabs button:hover { color: var(--text); }
+
+  nav.tabs button.active {
+    color: var(--accent-text);
+    border-bottom-color: var(--accent);
+  }
+
+  nav.tabs button:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .panel {
+    display: none;
+  }
+  .panel.active { display: block; }
+
+  .lede {
+    font-size: 13.5px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    max-width: 74ch;
+    margin: 0 0 18px;
+  }
+  .lede .id { color: var(--text); }
+
+  /* ---------- Playbook ---------- */
+
+  .playbook-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .search {
+    flex: 1 1 220px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-size: 13.5px;
+  }
+  .search::placeholder { color: var(--text-dim); }
+
+  .chip {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
+
+  .count {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin: 0 0 14px;
+  }
+
+  .cards { display: flex; flex-direction: column; gap: 10px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .card-title { font-weight: 650; font-size: 14.5px; margin: 0 0 4px; }
+  .card-tag {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .pill {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+  }
+  .pill.tool { background: var(--good-soft); color: var(--good); }
+  .pill.fix { background: var(--accent-soft); color: var(--accent-text); }
+  .pill.workaround { background: var(--warn-soft); color: var(--warn); }
+  .pill.investigating { background: var(--surface-2); color: var(--text-dim); border: 1px solid var(--border); }
+
+  .card-root {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.55;
+    margin: 8px 0 8px;
+  }
+
+  .card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .tickets { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ticket {
+    font-size: 11px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    color: var(--text-dim);
+    padding: 2px 7px;
+    border-radius: 5px;
+  }
+
+  .goto {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-text);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+  }
+  .goto:hover { text-decoration: underline; }
+
+  /* ---------- Tool layout ---------- */
+
+  .tool-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 720px) {
+    .tool-grid { grid-template-columns: 1fr; }
+  }
+
+  .pane {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .pane h3 {
+    margin: 0 0 12px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin: 12px 0 5px;
+  }
+  label:first-of-type { margin-top: 0; }
+
+  input[type="text"], textarea, select {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-size: 13px;
+  }
+  textarea { resize: vertical; min-height: 74px; line-height: 1.5; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
+
+  .btn {
+    appearance: none;
+    border: none;
+    border-radius: 7px;
+    background: var(--accent);
+    color: white;
+    font-size: 13px;
+    font-weight: 650;
+    padding: 9px 16px;
+    cursor: pointer;
+    margin-top: 14px;
+  }
+  .btn:hover { filter: brightness(1.06); }
+  .btn.secondary {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    font-weight: 600;
+    padding: 7px 12px;
+    margin-top: 0;
+  }
+  .btn.ghost {
+    background: transparent;
+    color: var(--accent-text);
+    border: 1px dashed var(--border);
+    font-weight: 600;
+    padding: 7px 12px;
+    margin-top: 8px;
+  }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+  .verdict {
+    border-radius: 9px;
+    padding: 12px 14px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    min-height: 44px;
+  }
+  .verdict.good { background: var(--good-soft); border-color: color-mix(in srgb, var(--good) 35%, var(--border)); color: var(--text); }
+  .verdict.bad { background: var(--bad-soft); border-color: color-mix(in srgb, var(--bad) 35%, var(--border)); color: var(--text); }
+  .verdict.warn { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 35%, var(--border)); color: var(--text); }
+
+  .verdict .headline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .verdict .badge {
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .verdict.good .badge { background: var(--good); color: #06210f; }
+  .verdict.bad .badge { background: var(--bad); color: #2a0505; }
+  .verdict.warn .badge { background: var(--warn); color: #2a1c00; }
+  .verdict.neutral .badge { background: var(--border); color: var(--text-dim); }
+
+  .out-block {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin-top: 8px;
+    color: var(--text);
+  }
+
+  .copy-wrap { display: flex; justify-content: flex-end; margin-top: 6px; }
+  .copy-btn {
+    font-size: 11.5px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 6px;
+    padding: 4px 9px;
+    cursor: pointer;
+  }
+  .copy-btn:hover { color: var(--text); }
+
+  .chunk-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+  .chunk-row input { flex: 1; }
+  .chunk-row .rm {
+    background: none; border: 1px solid var(--border); color: var(--text-dim);
+    border-radius: 6px; width: 28px; height: 28px; cursor: pointer; flex-shrink: 0;
+  }
+
+  .checklist { margin: 6px 0 0; padding-left: 0; list-style: none; }
+  .checklist li {
+    display: flex; gap: 8px; font-size: 13px; padding: 5px 0; line-height: 1.5;
+    border-top: 1px solid var(--border-soft);
+  }
+  .checklist li:first-child { border-top: none; }
+  .checklist .step-n {
+    font-family: ui-monospace, monospace; font-size: 11px; color: var(--accent-text);
+    background: var(--accent-soft); border-radius: 5px; padding: 1px 6px; height: fit-content; margen-top:1px;
+  }
+
+  .ref-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 8px; }
+  .ref-table th, .ref-table td {
+    text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border-soft);
+  }
+  .ref-table th { color: var(--text-dim); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  footer.note {
+    margin-top: 30px;
+    font-size: 12px;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    line-height: 1.6;
+  }
+
+  ::selection { background: var(--accent-soft); }
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="eyebrow"><span class="dot"></span>Sales KTLO &middot; CPQ / Salesforce Triage</div>
+    <h1>Recurring Ticket Playbook</h1>
+    <p>16 recurring failure patterns pulled from the ETM training set, the salesforce-triage skill suite, and recent ticket-triage sessions — with working classifiers for the five that are fully deterministic. Everything here is read-only guidance; nothing writes to Salesforce or Jira.</p>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="playbook" role="tab">Playbook</button>
+    <button class="tab-btn" data-tab="sms" role="tab">SMS Picklist</button>
+    <button class="tab-btn" data-tab="etm" role="tab">ETM Errors</button>
+    <button class="tab-btn" data-tab="subsumed" role="tab">Subsumed-CLI Order</button>
+    <button class="tab-btn" data-tab="dynopt" role="tab">DynamicOptionId</button>
+    <button class="tab-btn" data-tab="renewalpick" role="tab">Renewal Picklists</button>
+  </nav>
+
+  <!-- ================= PLAYBOOK ================= -->
+  <section class="panel active" id="panel-playbook">
+    <p class="lede">Every pattern below has at least two independent ticket precedents. <span class="id">Tool below</span> patterns have a working calculator in this page; the rest are documented fixes or workarounds worth a quick reference.</p>
+
+    <div class="playbook-controls">
+      <input class="search" id="pb-search" type="text" placeholder="Search patterns, tickets, field names…">
+    </div>
+    <div class="playbook-controls" id="pb-chips"></div>
+    <p class="count" id="pb-count"></p>
+    <div class="cards" id="pb-cards"></div>
+  </section>
+
+  <!-- ================= SMS PICKLIST ================= -->
+  <section class="panel" id="panel-sms">
+    <p class="lede">Root cause: <code>SKUNewReplacementController.mapProductCodeType()</code> has no <code>else</code> branch — SKUs outside its ~6 hardcoded Cloud&nbsp;Vault / M365 conditions return <code>null</code> for <code>Product_Code_Type__c</code>, and the dependent restricted picklist <code>Storage_Region_Bundle_FrontEnd__c</code> then fails to save (usually as <code>"Standard"</code>). Confirmed on <span class="id">CPQKTLO-11578</span>, <span class="id">CPQKTLO-11733</span>, <span class="id">CPQKTLO-14313</span> / <span class="id">Q-922876</span>; roadmap fix tracked as <span class="id">CPQ22-6676</span>.</p>
+    <div class="tool-grid">
+      <div class="pane">
+        <h3>Product2 fields</h3>
+        <label for="sms-type">Product_Type__c</label>
+        <input type="text" id="sms-type" list="sms-type-list" placeholder="e.g. M365H, Cloud Vault Archive">
+        <datalist id="sms-type-list">
+          <option value="Cloud Vault Archive"></option>
+          <option value="Cloud Vault Backup"></option>
+          <option value="M365H"></option>
+          <option value="M365 ZRS"></option>
+          <option value="M365 LRS"></option>
+        </datalist>
+        <label for="sms-desc">Description</label>
+        <input type="text" id="sms-desc" placeholder="e.g. M365 Backup Seat, 50GB pooled storage">
+        <label for="sms-code">ProductCode</label>
+        <input type="text" id="sms-code" placeholder="e.g. RS-UR-FE-MS-PE-PP">
+        <div class="btn-row">
+          <button class="btn" id="sms-run">Classify</button>
+        </div>
+        <div class="presets">
+          <button class="btn ghost" data-preset="sms-1">Example: M365 seat SKU</button>
+          <button class="btn ghost" data-preset="sms-2">Example: 50GB variant</button>
+          <button class="btn ghost" data-preset="sms-3">Example: Cloud Vault FedRAMP</button>
+          <button class="btn ghost" data-preset="sms-4">Example: unmapped family</button>
+        </div>
+      </div>
+      <div class="pane">
+        <h3>Result</h3>
+        <div class="verdict neutral" id="sms-out"><div class="headline"><span class="badge">WAITING</span>Fill in the fields and classify.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ETM ================= -->
+  <section class="panel" id="panel-etm">
+    <p class="lede">Source: 52 real <code>Account_Stage__c</code> error resolutions from the ETM staging-table training set — nearly all collapse into the same 7 no-action categories. This mirrors the <code>etm-triage</code> skill's <code>classify_error</code> logic.</p>
+    <div class="tool-grid">
+      <div class="pane">
+        <h3>Paste the error</h3>
+        <label for="etm-input">Account_Stage__c.Error_message__c</label>
+        <textarea id="etm-input" placeholder="Paste the staging-table error text here…"></textarea>
+        <div class="btn-row">
+          <button class="btn" id="etm-run">Classify</button>
+        </div>
+        <div class="presets">
+          <button class="btn ghost" data-preset="etm-1">Example: duplicate</button>
+          <button class="btn ghost" data-preset="etm-2">Example: inactive user</button>
+          <button class="btn ghost" data-preset="etm-3">Example: unknown</button>
+        </div>
+      </div>
+      <div class="pane">
+        <h3>Result</h3>
+        <div class="verdict neutral" id="etm-out"><div class="headline"><span class="badge">WAITING</span>Paste an error and classify.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SUBSUMED CLI ORDER ================= -->
+  <section class="panel" id="panel-subsumed">
+    <p class="lede">Root cause (<span class="id">CPQKTLO-14260</span>): <code>CustomReplacementController.cls</code> groups disposed lines onto a replacement line with <code>key.contains(...)</code> — a literal substring check, not a set comparison. A disposed line only groups correctly if <em>its own</em> Id-pair from <code>Arroyo_Subsumed_Old_Contract_Line_Items__c</code> appears as one contiguous, same-order chunk inside the replacement line's value. The fix is just concatenating each disposed line's own chunk, in order — never reordering the Ids <em>within</em> a chunk.</p>
+    <div class="tool-grid">
+      <div class="pane">
+        <h3>Disposed lines being subsumed</h3>
+        <label>Each row = one disposed line's own value (comma-separated Ids, keep internal order)</label>
+        <div id="chunk-rows"></div>
+        <div class="btn-row">
+          <button class="btn secondary" id="chunk-add">+ Add row</button>
+          <button class="btn secondary" id="chunk-example">Load example</button>
+        </div>
+        <button class="btn" id="chunk-run">Build replacement value</button>
+      </div>
+      <div class="pane">
+        <h3>Result</h3>
+        <div class="verdict neutral" id="chunk-out"><div class="headline"><span class="badge">WAITING</span>Add rows and build.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DYNAMIC OPTION ID ================= -->
+  <section class="panel" id="panel-dynopt">
+    <p class="lede">Root cause (<span class="id">SF-111765</span>, and a still-open bad-data cluster): <code>SBQQ.RenewalQuoteGenerator.reestablishQuoteLineRelationship</code> throws a <code>NullPointerException</code> when a <code>ContractLineItem.SBQQSC__DynamicOptionId__c</code> value (format <code>&lt;FeatureId&gt;:&lt;Product2Id&gt;</code>) has a product-half that isn't the asset's own <code>Product2Id</code> — most commonly seen after an R+E order is split across a New order and a Renewal order.</p>
+    <div class="tool-grid">
+      <div class="pane">
+        <h3>Compare the two halves</h3>
+        <label for="do-asset">Asset's own Product2Id</label>
+        <input type="text" id="do-asset" placeholder="e.g. 01t6f00000Oa3FTAAZ">
+        <label for="do-value">ContractLineItem.SBQQSC__DynamicOptionId__c</label>
+        <input type="text" id="do-value" placeholder="e.g. a6K6f000001N3igEAC:01t6f00000O6g1vAAB">
+        <div class="btn-row">
+          <button class="btn" id="do-run">Check</button>
+        </div>
+        <div class="presets">
+          <button class="btn ghost" data-preset="do-1">Example: mismatch</button>
+          <button class="btn ghost" data-preset="do-2">Example: matches</button>
+        </div>
+      </div>
+      <div class="pane">
+        <h3>Result</h3>
+        <div class="verdict neutral" id="do-out"><div class="headline"><span class="badge">WAITING</span>Fill in both values.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= RENEWAL PICKLIST ================= -->
+  <section class="panel" id="panel-renewalpick">
+    <p class="lede">Root cause (<span class="id">SF-111990</span>, <span class="id">SF-113186</span>): <code>SBQQ.ContractService.generateRenewalQuote</code> copies a value from the source Opportunity onto the new Renewal Opportunity — if that value was only ever added to the <strong>Sales</strong> record type's picklist, or is an inactive value, the copy throws <code>INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST</code> on the Renewal record.</p>
+    <div class="tool-grid">
+      <div class="pane">
+        <h3>Field &amp; value</h3>
+        <label for="rp-field">Field</label>
+        <select id="rp-field">
+          <option value="Primary_Competitor__c">Primary_Competitor__c</option>
+          <option value="Managed_Services_Deal_type__c">Managed_Services_Deal_type__c</option>
+        </select>
+        <label for="rp-value">Value on the source (Sales) Opportunity</label>
+        <input type="text" id="rp-value" placeholder="e.g. Datto">
+        <div class="btn-row">
+          <button class="btn" id="rp-run">Check</button>
+        </div>
+      </div>
+      <div class="pane">
+        <h3>Result</h3>
+        <div class="verdict neutral" id="rp-out"><div class="headline"><span class="badge">WAITING</span>Pick a field and value.</div></div>
+        <h3 style="margin-top:16px">Known state</h3>
+        <table class="ref-table" id="rp-table"></table>
+      </div>
+    </div>
+  </section>
+
+  <footer class="note">
+    Sources: <code>data/Ticket Triage Training Data.rtf</code> (ETM), <code>sf_triage/skills/*/SKILL.md</code> + handlers (SMS picklist, ETM), <code>scripts/apex/fix_ReplacementSummaryGrouping_Q894347.apex</code> (subsumed-CLI ordering), session memory on the CPQ renewal NPE investigation, and ~50-ticket triage notes from parallel sessions. Patterns marked "Investigating" are not yet user-confirmed — verify against current code/data before acting.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------------- Tabs ----------------
+  var tabBtns = document.querySelectorAll(".tab-btn");
+  tabBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () { activateTab(btn.dataset.tab); });
+  });
+  function activateTab(id) {
+    tabBtns.forEach(function (b) { b.classList.toggle("active", b.dataset.tab === id); });
+    document.querySelectorAll(".panel").forEach(function (p) {
+      p.classList.toggle("active", p.id === "panel-" + id);
+    });
+  }
+  window.__gotoTab = activateTab;
+
+  function setVerdict(el, level, badge, html) {
+    el.className = "verdict " + level;
+    el.innerHTML = '<div class="headline"><span class="badge">' + badge + '</span>' + html + '</div>';
+  }
+  function appendBlock(el, text) {
+    var wrap = document.createElement("div");
+    var block = document.createElement("div");
+    block.className = "out-block";
+    block.textContent = text;
+    var copyWrap = document.createElement("div");
+    copyWrap.className = "copy-wrap";
+    var btn = document.createElement("button");
+    btn.className = "copy-btn";
+    btn.textContent = "Copy";
+    btn.addEventListener("click", function () {
+      navigator.clipboard && navigator.clipboard.writeText(text);
+      btn.textContent = "Copied";
+      setTimeout(function () { btn.textContent = "Copy"; }, 1200);
+    });
+    copyWrap.appendChild(btn);
+    wrap.appendChild(block);
+    wrap.appendChild(copyWrap);
+    el.appendChild(wrap);
+  }
+
+  // ---------------- Playbook data ----------------
+  var PATTERNS = [
+    { tag: "CPQ SMS", title: "SMS UI renewal fails: bad value for restricted picklist field", root: "SKUNewReplacementController.mapProductCodeType() has no else branch — unmapped M365 seat/pooled-storage SKUs return null Product_Code_Type__c, breaking the dependent Storage_Region_Bundle_FrontEnd__c picklist.", tickets: ["CPQ22-6676", "CPQKTLO-11578", "CPQKTLO-11733", "CPQKTLO-14313"], status: "tool", tool: "sms" },
+    { tag: "ETM", title: "ETM staging-table batch errors that need no IT action", root: "Account_Stage__c failures — duplicate record, data already available, inactive territory user, row lock, missing adaptive Id, or a retry that already succeeded — collapse into a fixed set of safe-to-close categories.", tickets: ["SF project · 52-ticket training set"], status: "tool", tool: "etm" },
+    { tag: "Renewal", title: "Renewal fails: restricted picklist copied from Sales to Renewal Opp", root: "ContractService.generateRenewalQuote copies a source-Opp picklist value onto the Renewal Opp; if the value was only added to the Sales record type (or is inactive), the copy throws INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST.", tickets: ["SF-111990", "SF-113186"], status: "tool", tool: "renewalpick" },
+    { tag: "Renewal", title: "Renewal fails: NPE in RenewalQuoteGenerator.reestablishQuoteLineRelationship", root: "SBQQSC__DynamicOptionId__c's product-half doesn't match the asset's own Product2Id — common after an R+E order is split across a New order and a Renewal order.", tickets: ["SF-111765"], status: "tool", tool: "dynopt" },
+    { tag: "Renewal", title: "Renewal fails: CHILD_SHARE_FAILS_PARENT on demo accounts", root: "Demo accounts with a \"Renewal Unassigned\" owner throw a sharing error on renewal — expected behavior for demo accounts, not a data defect.", tickets: ["SF-113692"], status: "workaround" },
+    { tag: "CPQ Rules", title: "TPH Minimum Node Quantity Validation blocks small TPH lines", root: "Product rule blocks TPH quote lines under 4 nodes (ROBO model excepted); accounts with active TPH or an R+E frequently need a bypass.", tickets: ["CPQKTLO-14229", "CPQKTLO-14325", "CPQKTLO-14071", "CPQKTLO-14100", "CPQKTLO-14744"], status: "workaround" },
+    { tag: "CPQ Billing", title: "Prepayment credit needs manual update", root: "Auto-calculated prepayment credit needs a manual override/increment on the QLI; seen as $0 when the source order's Paid_Quantity__c is 0.", tickets: ["CPQKTLO-14176", "CPQKTLO-14203", "CPQKTLO-14315", "CPQKTLO-14072"], status: "workaround" },
+    { tag: "Data Integrity", title: "Submit blocked: Special Program missing on a subsumed QLI", root: "Validation blocks submission when Arroyo_Subsumed_Old_Contract_Line_Items__c is populated but Special_Program__c isn't set to match.", tickets: ["CPQKTLO-14143", "SF-111617"], status: "fix" },
+    { tag: "Replacement Summary", title: "Replacement Summary table silently drops disposed lines", root: "CustomReplacementController.cls groups by a literal .contains() substring check — a disposed line only appears if its own Id-pair sits contiguous and in-order inside the replacement line's subsumed-CLI value.", tickets: ["CPQKTLO-14260"], status: "tool", tool: "subsumed" },
+    { tag: "Replacement Summary", title: "Replacement Summary table truncates on the Quote Document PDF", root: "The 11-column Replacement Summary table is wide enough that the SBQQ document generator cuts it off on large terminated-SKU sets. No template fix yet — repo has a manual runbook + HTML previewer workaround.", tickets: ["CPQ22-6765", "SF-113655"], status: "workaround" },
+    { tag: "CPQ SMS", title: "Disposition Reason locked / Churn selection crashes New Replacement", root: "reconstructionHelper.js disables the Disposition dropdown for auto dispositions (Upgraded/Converted/Refreshed/auto-Renewing); a stale \"Churn\" disposition (invalid outside plain Renewal) hits findIndex → -1 and throws a TypeError. Fix: edit the Replacement JSON directly.", tickets: ["At-Risk / Churn renewal tickets"], status: "fix" },
+    { tag: "Approval / Ops", title: "Stuck approval needs backend reassignment", root: "An in-flight approval is stuck on an approver who can't act; reassign the pending step to a new approver from the backend.", tickets: ["CPQKTLO-14207", "CPQKTLO-14141", "CPQKTLO-14337"], status: "workaround" },
+    { tag: "CPQ Rules", title: "End-of-sale / restricted SKU needs to be added anyway", root: "Product filter blocks an end-of-sale or restricted SKU from the Line Editor; bypass via the custom setting that governs the filter, then add manually.", tickets: ["CPQKTLO-14319", "CPQKTLO-14343", "CPQKTLO-14255"], status: "workaround" },
+    { tag: "Approval / Ops", title: "RSC multi-account transfer", root: "RSC Instance needs its Primary Account, Relationship, License Type, or SDP End User updated to reflect a multi-account transfer.", tickets: ["SF-113028", "SF-113034"], status: "fix" },
+    { tag: "Data Integrity", title: "NetSuite order hold: SF Account not found as NS Customer", root: "The NetSuite Customer record points at a Salesforce Account Id that no longer resolves; fix the Id on the NS side and resync the order.", tickets: ["SF-111993"], status: "fix" },
+    { tag: "Data Integrity", title: "Smart Approvals mismatch on cloned quotes", root: "MapApprovalRecordsToClonedQuote.cls copies approvals where Custom_Smart_Approval__c OR sbaa__EnableSmartApproval__c is true, but AutoApprovalTriggerUtility.getSmartConditions only evaluates Custom_Smart_Approval__c — a code-level condition mismatch, not a data issue.", tickets: ["Code-level finding, no ticket yet"], status: "investigating" },
+    { tag: "Data Integrity", title: "Consolidated quote lines lose quantity on the next resync", root: "BatchToUpdateQLIQty.cls (REEN-25) rebuilds SBQQ__Quantity__c by summing Replacement_Details__c rowValues, but for a row whose entId didn't trigger the resync it falls back to that Entitlement's live Quantity__c instead of the JSON's captured selectedQty — if that entitlement's quantity has since changed, the total silently drifts.", tickets: ["Example: a6PVN000007EIfN2AW — unconfirmed"], status: "investigating" }
+  ];
+
+  var STATUS_LABEL = { tool: "Tool below", fix: "Documented fix", workaround: "Workaround", investigating: "Investigating" };
+  var pbCardsEl = document.getElementById("pb-cards");
+  var pbCountEl = document.getElementById("pb-count");
+  var pbSearch = document.getElementById("pb-search");
+  var pbChips = document.getElementById("pb-chips");
+  var activeTag = "All";
+
+  var tags = ["All"].concat(Array.from(new Set(PATTERNS.map(function (p) { return p.tag; }))));
+  tags.forEach(function (t) {
+    var b = document.createElement("button");
+    b.className = "chip" + (t === "All" ? " active" : "");
+    b.textContent = t;
+    b.addEventListener("click", function () {
+      activeTag = t;
+      pbChips.querySelectorAll(".chip").forEach(function (c) { c.classList.toggle("active", c === b); });
+      renderPlaybook();
+    });
+    pbChips.appendChild(b);
+  });
+
+  function renderPlaybook() {
+    var q = (pbSearch.value || "").toLowerCase().trim();
+    var items = PATTERNS.filter(function (p) {
+      if (activeTag !== "All" && p.tag !== activeTag) return false;
+      if (!q) return true;
+      var hay = (p.title + " " + p.root + " " + p.tag + " " + p.tickets.join(" ")).toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+    pbCountEl.textContent = items.length + " of " + PATTERNS.length + " patterns";
+    pbCardsEl.innerHTML = "";
+    items.forEach(function (p) {
+      var card = document.createElement("div");
+      card.className = "card";
+      var ticketsHtml = p.tickets.map(function (t) { return '<span class="ticket">' + escapeHtml(t) + "</span>"; }).join("");
+      var toolBtn = p.tool ? '<button class="goto" data-goto="' + p.tool + '">Open tool →</button>' : "";
+      card.innerHTML =
+        '<div class="card-top">' +
+          '<div><div class="card-tag">' + escapeHtml(p.tag) + '</div><div class="card-title">' + escapeHtml(p.title) + '</div></div>' +
+          '<span class="pill ' + p.status + '">' + STATUS_LABEL[p.status] + '</span>' +
+        '</div>' +
+        '<div class="card-root">' + escapeHtml(p.root) + '</div>' +
+        '<div class="card-bottom"><div class="tickets">' + ticketsHtml + '</div>' + toolBtn + '</div>';
+      pbCardsEl.appendChild(card);
+    });
+    pbCardsEl.querySelectorAll("[data-goto]").forEach(function (b) {
+      b.addEventListener("click", function () { activateTab(b.dataset.goto); });
+    });
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  pbSearch.addEventListener("input", renderPlaybook);
+  renderPlaybook();
+
+  // ---------------- SMS Picklist classifier ----------------
+  function classifyProductCodeType(productType, description, productCode) {
+    var pt = productType || "";
+    var desc = (description || "").toUpperCase();
+    var code = (productCode || "").toUpperCase();
+    var fedramp = desc.indexOf("FEDRAMP") !== -1 || code.indexOf("FEDRAMP") !== -1;
+    if (pt === "Cloud Vault Archive") return fedramp ? "CVAG" : "CVA";
+    if (pt === "Cloud Vault Backup") return fedramp ? "CVBG" : "CVB";
+    var isM365 = pt.indexOf("M365") === 0 || code.indexOf("M365") !== -1;
+    if (isM365) {
+      if (desc.indexOf("50GB") !== -1 || desc.indexOf("50 FEGB") !== -1) return "M365X";
+      return "M365";
+    }
+    return null;
+  }
+  var smsPresets = {
+    "sms-1": { type: "M365H", desc: "M365 Backup Seat", code: "RS-UR-FE-MS-PE-PP" },
+    "sms-2": { type: "M365 ZRS", desc: "M365 Backup 50GB pooled storage", code: "RS-GB-MS-PE-PP" },
+    "sms-3": { type: "Cloud Vault Archive", desc: "Cloud Vault Archive FedRAMP", code: "RS-CVA-FEDRAMP-PP" },
+    "sms-4": { type: "Polaris SaaS Protection", desc: "Third-party workload protection", code: "RS-PSP-STD-PP" }
+  };
+  document.querySelectorAll('[data-preset^="sms-"]').forEach(function (b) {
+    b.addEventListener("click", function () {
+      var p = smsPresets[b.dataset.preset];
+      document.getElementById("sms-type").value = p.type;
+      document.getElementById("sms-desc").value = p.desc;
+      document.getElementById("sms-code").value = p.code;
+    });
+  });
+  document.getElementById("sms-run").addEventListener("click", function () {
+    var type = document.getElementById("sms-type").value.trim();
+    var desc = document.getElementById("sms-desc").value.trim();
+    var code = document.getElementById("sms-code").value.trim();
+    var out = document.getElementById("sms-out");
+    var result = classifyProductCodeType(type, desc, code);
+    if (result) {
+      setVerdict(out, "good", "OK", "Product_Code_Type__c = <code>" + result + "</code>");
+      appendBlock(out, "Product_Code_Type__c: " + result +
+        "\nSafe to force this value on the new SBQQ__QuoteLine__c row before insert." +
+        "\nTest-save one row first — the copied Storage_Region_Bundle_FrontEnd__c value hasn't been verified against Salesforce's dependent-picklist matrix for this SKU.");
+    } else {
+      setVerdict(out, "bad", "UNKNOWN", "No known Product_Code_Type__c mapping for this SKU family.");
+      appendBlock(out, "Do not guess a Product_Code_Type__c value.\nStop and ask a human, or escalate the SKU details to CPQ22-6676 so the permanent Apex fix can cover it.");
+    }
+  });
+
+  // ---------------- ETM classifier ----------------
+  var ETM_RULES = [
+    { test: /duplicate/i, category: "Duplicate account-stage record", comment: "Error is due to a duplicate record with the account stage record. No action required from IT — closing as No Action." },
+    { test: /inactive.*territor|territor.*inactive/i, category: "Inactive territory assignment user", comment: "The territory user association job failed because the related territory assignment user is inactive. No action required from IT on this." },
+    { test: /no matching record found for delete/i, category: "No matching record for delete", comment: "Failure was \"No matching record found for delete\" — data already reflects the expected state. No action required from IT." },
+    { test: /adaptive/i, category: "Adaptive Id missing or incorrect", comment: "The error is due to the Adaptive Id not being provided or being incorrect on the source record — this is user-facing and self-explanatory. No corrective action required from IT." },
+    { test: /row lock/i, category: "Row lock (update still visible)", comment: "A row lock error is present, but the expected update is visible on the related account record(s). No action required from IT at this time." },
+    { test: /already available|already present|data already/i, category: "Data already available", comment: "The error occurred because the data is already available on the account record. No action required from IT — reprocessing will succeed." },
+    { test: /success|successful|trials? (have|has|is|was) (been )?successful/i, category: "Retry already succeeded", comment: "The recent trial/operation on the account stage completed successfully and no errors are pending. No further action is required from IT at this time." }
+  ];
+  var etmPresets = {
+    "etm-1": "Error: Duplicate record with account stage record: aC1VN000002BAHR0A4 good to close.",
+    "etm-2": "The territory user association job failed as the related territory assignment user is inactive. No action required from IT on this.",
+    "etm-3": "Staging job failed with a validation rule error on a custom trigger — first time seeing this signature."
+  };
+  document.querySelectorAll('[data-preset^="etm-"]').forEach(function (b) {
+    b.addEventListener("click", function () { document.getElementById("etm-input").value = etmPresets[b.dataset.preset]; });
+  });
+  document.getElementById("etm-run").addEventListener("click", function () {
+    var text = document.getElementById("etm-input").value || "";
+    var out = document.getElementById("etm-out");
+    var match = null;
+    for (var i = 0; i < ETM_RULES.length; i++) { if (ETM_RULES[i].test.test(text)) { match = ETM_RULES[i]; break; } }
+    if (match) {
+      setVerdict(out, "good", "NO ACTION", "Matched pattern: <code>" + match.category + "</code>");
+      appendBlock(out, match.comment);
+    } else {
+      setVerdict(out, "warn", "REVIEW", "Doesn't match a known no-action pattern.");
+      appendBlock(out, "Leave for human review — this error signature isn't in the trained no-action set yet.");
+    }
+  });
+
+  // ---------------- Subsumed CLI order builder ----------------
+  var chunkRows = document.getElementById("chunk-rows");
+  function addChunkRow(value) {
+    var row = document.createElement("div");
+    row.className = "chunk-row";
+    var input = document.createElement("input");
+    input.type = "text";
+    input.placeholder = "e.g. Id-A1, Id-A2";
+    input.value = value || "";
+    var rm = document.createElement("button");
+    rm.className = "rm";
+    rm.textContent = "✕";
+    rm.addEventListener("click", function () {
+      if (chunkRows.children.length > 1) row.remove();
+    });
+    row.appendChild(input);
+    row.appendChild(rm);
+    chunkRows.appendChild(row);
+  }
+  addChunkRow(""); addChunkRow(""); addChunkRow("");
+  document.getElementById("chunk-add").addEventListener("click", function () { addChunkRow(""); });
+  document.getElementById("chunk-example").addEventListener("click", function () {
+    chunkRows.innerHTML = "";
+    ["Id-613a, Id-613b", "Id-614a, Id-614b", "Id-615a, Id-615b", "Id-616a, Id-616b", "Id-617a"].forEach(addChunkRow);
+  });
+  document.getElementById("chunk-run").addEventListener("click", function () {
+    var out = document.getElementById("chunk-out");
+    var chunks = Array.from(chunkRows.querySelectorAll("input")).map(function (i) { return i.value.trim(); }).filter(Boolean);
+    if (!chunks.length) {
+      setVerdict(out, "bad", "EMPTY", "Add at least one disposed line's subsumed-CLI value.");
+      return;
+    }
+    var combined = chunks.join(", ");
+    setVerdict(out, "good", "BUILT", chunks.length + " chunk(s) concatenated, order preserved.");
+    appendBlock(out, combined);
+    var note = document.createElement("p");
+    note.style.fontSize = "12px";
+    note.style.color = "var(--text-dim)";
+    note.style.marginTop = "8px";
+    note.textContent = "Paste this into the replacement line's Arroyo_Subsumed_Old_Contract_Line_Items__c. Never reorder Ids within a single row — only the order of whole rows is free to change.";
+    out.appendChild(note);
+  });
+
+  // ---------------- DynamicOptionId checker ----------------
+  var KNOWN_BAD_PRODUCT = "01t6f00000O6g1vAAB";
+  var doPresets = {
+    "do-1": { asset: "01t6f00000Oa3FTAAZ", value: "a6K6f000001N3igEAC:01t6f00000O6g1vAAB" },
+    "do-2": { asset: "01t6f00000Oa3FTAAZ", value: "a6K6f000001N3j0EAC:01t6f00000Oa3FTAAZ" }
+  };
+  document.querySelectorAll('[data-preset^="do-"]').forEach(function (b) {
+    b.addEventListener("click", function () {
+      var p = doPresets[b.dataset.preset];
+      document.getElementById("do-asset").value = p.asset;
+      document.getElementById("do-value").value = p.value;
+    });
+  });
+  document.getElementById("do-run").addEventListener("click", function () {
+    var asset = document.getElementById("do-asset").value.trim();
+    var value = document.getElementById("do-value").value.trim();
+    var out = document.getElementById("do-out");
+    var parts = value.split(":");
+    if (parts.length !== 2 || !parts[0] || !parts[1]) {
+      setVerdict(out, "warn", "FORMAT", "Expected <code>&lt;FeatureId&gt;:&lt;Product2Id&gt;</code> — got something else.");
+      return;
+    }
+    var productHalf = parts[1];
+    var isMatch = productHalf.toLowerCase() === asset.toLowerCase();
+    var isKnownBad = productHalf.toLowerCase() === KNOWN_BAD_PRODUCT.toLowerCase();
+    if (isMatch) {
+      setVerdict(out, "good", "OK", "Product-half matches this asset's own Product2Id.");
+      return;
+    }
+    setVerdict(out, "bad", "MISMATCH", "Product-half (<code>" + escapeHtml(productHalf) + "</code>) does not match the asset's own Product2Id" +
+      (isKnownBad ? " — and matches the previously-confirmed recurring bad value." : "."));
+    var list = document.createElement("ul");
+    list.className = "checklist";
+    [
+      "Correct SBQQSC__CurrentContractLineItem__c and SBQQSC__RequiredByLineItem__c to the current transaction's CLIs.",
+      "Fix SBQQ__DynamicOptionId__c so the product-half equals the asset's own Product2Id (keep the feature-half).",
+      "Populate SBQQSC__RequiredById__c on the HW Support lines to match their linked assets.",
+      "Retrigger renewal creation."
+    ].forEach(function (step, i) {
+      var li = document.createElement("li");
+      li.innerHTML = '<span class="step-n">' + (i + 1) + '</span><span>' + step + '</span>';
+      list.appendChild(li);
+    });
+    out.appendChild(list);
+    var ref = document.createElement("p");
+    ref.style.fontSize = "12px"; ref.style.color = "var(--text-dim)"; ref.style.marginTop = "8px";
+    ref.textContent = "Fix template confirmed on SF-111765 (a renewal split across a New order and a Renewal order).";
+    out.appendChild(ref);
+  });
+
+  // ---------------- Renewal picklist checker ----------------
+  var RP_DATA = {
+    "Primary_Competitor__c": {
+      missingFromRenewalRT: ["datto", "atempo"],
+      table: [["Datto", "Missing from Renewal RT (added to Sales RT under SF-102018)"], ["Atempo", "Missing from Renewal RT (added to Sales RT under SF-102018)"]]
+    },
+    "Managed_Services_Deal_type__c": {
+      valid: ["dedicated deal", "shared services"],
+      invalid: ["sell-to"],
+      table: [["Dedicated Deal", "Valid"], ["Shared Services", "Valid"], ["Sell-To", "Inactive — confirmed cause of SF-113186"]]
+    }
+  };
+  function renderRpTable(field) {
+    var t = document.getElementById("rp-table");
+    var rows = RP_DATA[field].table;
+    t.innerHTML = "<tr><th>Value</th><th>Status</th></tr>" + rows.map(function (r) {
+      return "<tr><td>" + escapeHtml(r[0]) + "</td><td>" + escapeHtml(r[1]) + "</td></tr>";
+    }).join("");
+  }
+  renderRpTable(document.getElementById("rp-field").value);
+  document.getElementById("rp-field").addEventListener("change", function (e) { renderRpTable(e.target.value); });
+  document.getElementById("rp-run").addEventListener("click", function () {
+    var field = document.getElementById("rp-field").value;
+    var value = document.getElementById("rp-value").value.trim();
+    var norm = value.toLowerCase();
+    var out = document.getElementById("rp-out");
+    var d = RP_DATA[field];
+    if (!value) {
+      setVerdict(out, "warn", "EMPTY", "Enter the value from the source Opportunity.");
+      return;
+    }
+    if (field === "Primary_Competitor__c") {
+      if (d.missingFromRenewalRT.indexOf(norm) !== -1) {
+        setVerdict(out, "bad", "GAP KNOWN", "\"" + escapeHtml(value) + "\" exists on the Sales record type but was never added to the Renewal record type.");
+        appendBlock(out, "Add \"" + value + "\" to the Renewal record type's Primary_Competitor__c value set (Setup → Object Manager → Opportunity → Primary_Competitor__c), then retry the renewal.");
+      } else {
+        setVerdict(out, "warn", "CHECK MANUALLY", "Not a previously-confirmed gap.");
+        appendBlock(out, "If the renewal still fails on this value, verify it's active on the Renewal record type's picklist value set before assuming it's a new instance of this bug.");
+      }
+    } else {
+      if (d.invalid.indexOf(norm) !== -1) {
+        setVerdict(out, "bad", "INVALID", "\"" + escapeHtml(value) + "\" is an inactive value — confirmed cause of SF-113186.");
+        appendBlock(out, "Only \"Dedicated Deal\" and \"Shared Services\" are valid. Update Managed_Services_Deal_type__c on the source Opportunity, then retry the renewal.");
+      } else if (d.valid.indexOf(norm) !== -1) {
+        setVerdict(out, "good", "OK", "Recognized valid value.");
+      } else {
+        setVerdict(out, "warn", "UNRECOGNIZED", "Not one of the known valid or invalid values.");
+        appendBlock(out, "Verify this value exists on the Renewal record type's active picklist value set before retrying.");
+      }
+    }
+  });
+})();
+</script>
