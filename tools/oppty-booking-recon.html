@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oppty vs Booking Recon</title>
+<style>
+:root{color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f6f8;color:#1f2430}
+header{background:#0b1f3a;color:#fff;padding:18px 28px}
+header h1{margin:0;font-size:18px;font-weight:600}
+header p{margin:4px 0 0;font-size:12.5px;color:#b8c4d8}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 28px 60px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid #d9dde5;margin-bottom:18px}
+.tab{padding:9px 16px;cursor:pointer;border:1px solid transparent;border-bottom:none;border-radius:6px 6px 0 0;color:#566;font-weight:500;background:none;font-size:14px}
+.tab.active{background:#fff;border-color:#d9dde5;color:#0b1f3a;margin-bottom:-1px}
+.card{background:#fff;border:1px solid #e1e5ec;border-radius:8px;padding:16px 18px;margin-bottom:14px}
+.card h3{margin:0 0 8px;font-size:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input[type=text]{flex:1;min-width:260px;padding:9px 11px;border:1px solid #c7cdd9;border-radius:6px;font-size:14px}
+button.btn{padding:9px 16px;border:0;border-radius:6px;background:#1a56db;color:#fff;font-weight:600;cursor:pointer;font-size:13.5px}
+button.btn:hover{background:#1646b5}
+button.btn.sec{background:#fff;color:#1a56db;border:1px solid #1a56db}
+button.sm{padding:4px 10px;font-size:12px}
+.hint{color:#667;font-size:12.5px;margin-top:6px}
+.qhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.qtitle{font-weight:600}
+.badge{display:inline-block;font-size:11px;padding:1px 7px;border-radius:10px;margin-left:6px;font-weight:600}
+.b-req{background:#e6f0ff;color:#1a56db}
+.b-opt{background:#eef0f4;color:#566}
+
+.qpair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.qcol{min-width:0}
+.qpair pre{white-space:pre;font-size:11px;max-height:420px}
+pre{margin:0;background:#0f172a;color:#d6e2f5;padding:12px 14px;border-radius:6px;overflow:auto;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
+textarea{width:100%;min-height:78px;padding:8px 10px;border:1px solid #c7cdd9;border-radius:6px;font:12px ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:800px){.grid2{grid-template-columns:1fr}}
+.verdict{padding:14px 18px;border-radius:8px;font-size:15px;font-weight:600;margin-bottom:14px}
+.v-ok{background:#e7f6ec;color:#146c2e;border:1px solid #b7e2c4}
+.v-bad{background:#fdecec;color:#a11d1d;border:1px solid #f4bcbc}
+.v-warn{background:#fff6e0;color:#8a5a00;border:1px solid #f1d99a}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{background:#eef1f6;text-align:left;padding:7px 9px;font-weight:600;border-bottom:1px solid #d9dde5}
+td{padding:6px 9px;border-bottom:1px solid #eef0f4;vertical-align:top}
+td.diff{color:#a11d1d;font-weight:600}
+details.lg{border:1px solid #e1e5ec;border-radius:6px;margin:8px 0;background:#fff}
+details.lg>summary{cursor:pointer;padding:8px 10px;background:#f7f8fb;border-radius:6px;list-style:none;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+details.lg[open]>summary{border-bottom:1px solid #e1e5ec;border-radius:6px 6px 0 0}
+.idc{font:11.5px ui-monospace,Menlo,Consolas,monospace;color:#445;background:#eef1f6;padding:1px 7px;border-radius:4px}
+details.sec{margin:8px 8px 4px}
+summary.sech{background:#eef0f4;padding:6px 10px;border-radius:4px;font-weight:600;cursor:pointer}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 28px;padding:2px 6px}
+.mh2{display:grid;grid-template-columns:1.4fr 1fr 1fr 22px 1.4fr 1fr 1fr 22px;gap:6px;padding:4px 10px 0;font-size:11px;color:#667;text-align:right}
+.mh2 span:nth-child(5){text-align:left}
+.mc{display:grid;grid-template-columns:1.5fr 1fr 1fr 20px;gap:6px;align-items:center;padding:5px 6px;border-bottom:1px solid #e5e8ee;font-size:12.5px;min-height:30px}
+.mc.r-bad{background:#fdecec}
+.mc .ml{color:#334}
+.mc .mv{text-align:right;font-variant-numeric:tabular-nums;word-break:break-word}
+.mc.r-ok .mi{color:#146c2e;font-weight:700}
+.mc.r-bad .mi{color:#a11d1d;font-weight:700}
+.mc.none .mv{color:#99a}
+@media(max-width:900px){.mgrid{grid-template-columns:1fr}.mh2{display:none}}
+table.cmp{font-size:12.5px}
+table.cmp td,table.cmp th{padding:3px 8px}
+tr.r-bad td{background:#fdecec}
+tr.r-info td{background:#fff6e0}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.tag{font-size:11px;padding:1px 7px;border-radius:10px;font-weight:600}
+.t-bad{background:#fdecec;color:#a11d1d}
+.t-ok{background:#e7f6ec;color:#146c2e}
+.t-warn{background:#fff6e0;color:#8a5a00}
+ul{margin:6px 0 0 18px;padding:0}
+li{margin:3px 0}
+.muted{color:#667}
+.hidden{display:none}
+.toast{position:fixed;bottom:20px;right:20px;background:#0b1f3a;color:#fff;padding:8px 14px;border-radius:6px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <h1>Oppty vs Booking Recon <span style="font-size:12px;font-weight:400;opacity:.8;margin-left:8px">v1.3 · updated 2026-10-19</span></h1>
+  <p>Enter an ID &rarr; copy the queries &rarr; run them in production &rarr; paste the results &rarr; see exactly where Opportunity and Booking differ. Data never leaves your browser.</p>
+</header>
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab active" data-tab="q">1. Get queries</button>
+    <button class="tab" data-tab="c">2. Compare results</button>
+    <button class="tab" data-tab="r">3. Rebate calculator</button>
+    <button class="tab" data-tab="d">4. Debooking review</button>
+    <button class="tab" data-tab="h">How it works</button>
+  </div>
+
+  <!-- TAB 1 -->
+  <div id="tab-q">
+    <div class="card">
+      <h3>Opportunity ID or Booking ID</h3>
+      <div class="row">
+        <input type="text" id="idin" placeholder="e.g. 006VI00000szvVJYAY  or  aAtVN0000005Egf0AE">
+        <button class="btn" id="go">Generate queries</button>
+      </div>
+      <div class="hint" id="idhint">Enter an Opportunity ID (006…) or a Booking ID &ndash; you get header, line and TART (territory) queries, Opportunity and Booking side by side.</div>
+    </div>
+    <div id="qout"></div>
+  </div>
+
+  <!-- TAB 2 -->
+  <div id="tab-c" class="hidden">
+    <div class="card">
+      <h3>Paste the query results</h3>
+      <div class="hint" style="margin-top:0;margin-bottom:10px">Paste Workbench/Developer Console output (CSV or tab-separated, with header row). Paste whichever results you have &ndash; header-level only (O1 + B1), line-level only (O2 + B2), territory only (O1 + B3), or any mix. Checks that need missing data are skipped.</div>
+      <div class="grid2" id="pastes"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="run">Compare</button>
+        <button class="btn sec" id="clear">Clear</button>
+      </div>
+    </div>
+    <div id="cout"></div>
+  </div>
+
+  <!-- TAB REBATE -->
+  <div id="tab-r" class="hidden">
+    <div class="card">
+      <h3>Step 1 &ndash; Enter the Booking ID</h3>
+      <div class="row">
+        <input type="text" id="rid" placeholder="Booking ID (aAt…) – or Opportunity ID (006…)">
+        <button class="btn" id="rgo">Get queries</button>
+      </div>
+      <div id="rq"></div>
+      <div class="hint">Run the <b>Opportunity &amp; distributor</b> query first – its result is needed in Step 2.</div>
+    </div>
+    <div class="card">
+      <h3>Step 2 &ndash; Verify the Rebate % itself</h3>
+      <div class="hint" style="margin-top:0">The rebate should come from the <b>Rebate Table</b> (Distributor + deal type + date window).</div>
+      <div class="qtitle" style="margin-top:10px">2a. Paste the Opportunity &amp; distributor result</div>
+      <textarea id="rA" style="min-height:70px;margin-top:6px" placeholder="Paste the result of the 'Opportunity & distributor' query"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn sm" id="rbt">Build Rebate Table query</button></div>
+      <div id="rq2"></div>
+      <div class="qtitle" style="margin-top:10px">2b. Paste the Rebate Table result</div>
+      <textarea id="rT" style="min-height:70px;margin-top:6px" placeholder="Paste the result of the 'Rebate Table' query"></textarea>
+      <div class="row" style="margin-top:8px">
+        <label>Deal type <input type="text" id="rmsp" style="min-width:120px;flex:none;width:130px" placeholder="opp sub-type"></label>
+        <label>Reference date <input type="text" id="rdt" style="min-width:110px;flex:none;width:120px" placeholder="opp close date"></label>
+        <button class="btn sm" id="rchk">Check expected rebate %</button>
+      </div>
+      <div id="rchkout"></div>
+    </div>
+    <div class="card">
+      <h3>Step 3 &ndash; Booking line items &amp; net values</h3>
+      <div id="rq3"><div class="muted">The booking line items query appears here after Step 1.</div></div>
+      <div class="qtitle" style="margin-top:10px">Paste the booking line items result</div>
+      <textarea id="rdata" style="min-height:110px;margin-top:6px" placeholder="Paste CSV / tab-separated result of the booking line items query, incl. header row"></textarea>
+      <div class="row" style="margin-top:10px">
+        <label>Rebate % override <input type="text" id="rpct" style="min-width:90px;flex:none;width:90px" placeholder="auto"></label>
+        <label style="flex-direction:row;gap:6px;align-items:center"><input type="checkbox" id="ruse" checked> use the Rebate Table % when it differs from the applied %</label>
+      </div>
+      <div class="hint">Leave the override blank to use the Rebate % on the booking's <b>Distributor Fee</b> line (or the Rebate Table % when ticked and different).</div>
+      <div class="row" style="margin-top:10px"><button class="btn" id="rcalc">Calculate net values</button><button class="btn sec" id="rclear">Clear</button></div>
+    </div>
+    <div id="rout"></div>
+  </div>
+
+  <!-- TAB DEBOOKING -->
+  <div id="tab-d" class="hidden">
+    <div class="card">
+      <h3>Step 1 &ndash; Find the debooking</h3>
+      <div class="row">
+        <select id="dtype" style="padding:9px;border:1px solid #c7cdd9;border-radius:6px"><option value="opp">Debooking Opportunity ID</option><option value="bkg">Debooking Booking ID</option><option value="ccr">CCR ID</option></select>
+        <input type="text" id="did" placeholder="Paste the ID">
+        <button class="btn" id="dgo">Get query</button>
+      </div>
+      <div id="dq1"></div>
+      <div style="margin-top:10px"><div class="qtitle" style="margin-bottom:4px">Paste the Step 1 result</div>
+      <textarea id="ds1" style="min-height:60px" placeholder="Paste the result of the Step 1 query"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn" id="dres">Resolve &amp; build queries</button></div></div>
+    </div>
+    <div id="dq2"></div>
+    <div class="card" id="dpastes" style="display:none">
+      <h3>Step 3 &ndash; Paste the results</h3>
+      <div class="grid2">
+        <div><div class="qtitle" style="margin-bottom:4px">Debooking opportunity (A)</div><textarea id="dA"></textarea></div>
+        <div><div class="qtitle" style="margin-bottom:4px">Original opportunity (B)</div><textarea id="dB"></textarea></div>
+        <div><div class="qtitle" style="margin-bottom:4px">Booking lines &ndash; original + debooking (C)</div><textarea id="dC"></textarea></div>
+        <div><div class="qtitle" style="margin-bottom:4px">Debooking opportunity lines (D) &ndash; LineItem Based only</div><textarea id="dD"></textarea></div>
+      </div>
+      <div class="row" style="margin-top:10px"><label>Rebate % override <input type="text" id="dpct" style="min-width:90px;flex:none;width:90px" placeholder="auto"></label>
+        <button class="btn" id="drun">Review debooking</button></div>
+    </div>
+    <div id="dout"></div>
+  </div>
+
+  <!-- TAB 3 -->
+  <div id="tab-h" class="hidden">
+    <div class="card">
+      <h3>What gets compared</h3>
+      <ul>
+        <li><b>Header sync (20 fields)</b> &ndash; close date, type, sub-type, deal reg, split, partner, owner, secondary/renewal owner, SE, SDR led, SE misaligned, strategic account, alliance partners, ISR/SDR credit, original lead owner, R2K, PO accepted timestamp. The batch only copies them while the booking's <i>Field Update Status</i> is blank (not frozen).</li>
+        <li><b>Line level</b> &ndash; each opportunity product &times; (order qty &divide; opp qty) vs its booking line: ACV, New/Expansion, Subsumed, Renewal ACV/TCV, product-type ACV, discounts. Net = Gross &times; (100 &minus; rebate%).</li>
+        <li><b>Totals</b> &ndash; opportunity ACV/TCV fields vs the sum of booking lines (and vs the sum of opportunity lines), to separate opportunity-side issues from booking sync issues.</li>
+        <li><b>Theatre</b> &ndash; opportunity ETM Theatre/Area/Region/Territory vs booking split.</li>
+      </ul>
+      <p class="muted">Differences of 0.01 or less are treated as rounding. Blank amounts are treated as 0. The root-cause notes are indicators &ndash; confirm with the extra queries suggested in the report.</p>
+      <p class="muted">Booking objects are restricted for Claude's Salesforce connector, so queries are run by you in production. Nothing is sent anywhere by this page.</p>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast">Copied</div>
+
+<script>
+/* ---------- QUERY PACK ---------- */
+const QALL = [
+{k:'O1',t:'Opportunity header',req:true,sql:`SELECT Id, Name, StageName, CloseDate, Amount,
+       Opportunity_Type__c, Opportunity_Sub_Type__c, Deal_Registration_Type__c, split__c,
+       Partner_Lookup__c, OwnerId, Owner.EmployeeNumber, SecondaryOwner__c, RenewalOwner__c,
+       Rubrik_Sales_Engineer__c, SDR_Led__c, SE_Misaligned__c, Strategic_Account__c,
+       Alliance_Partner_Name__c, Alliance_HW_Partner__c, ISR_SDR_Oppty_Credit_Total__c,
+       OriginalLeadOwner__c,
+       ACV_Amount__c, New_Expansion_ACV__c, Renewal_Subsumed_ACV__c, Renewal_ACV__c,
+       New_Expansion_TCV__c, Subsumed_Renewal_TCV__c, Renewal_TCV__c,
+       Opportunity_Split_Parent__c, Split_percentage__c, Split_Amount__c, CCR__c,
+       ETM_Theatre__c, ETM_Area__c, ETM_Region__c, ETM_Territory__c,
+       Opp_PLS_ETM_Theatre__c, Opp_PLS_ETM_Area__c, Opp_PLS_ETM_Region__c, Opp_PLS_ETM_Territory__c,
+       Opp_PLS_NCD_ETM_Theatre__c, Opp_PLS_NCD_ETM_Area__c, Opp_PLS_NCD_ETM_Region__c, Opp_PLS_NCD_ETM_Territory__c,
+       Opp_PLS_SaaS_ETM_Theatre__c, Opp_PLS_SaaS_ETM_Area__c, Opp_PLS_SaaS_ETM_Region__c, Opp_PLS_SaaS_ETM_Territory__c,
+       LastModifiedDate
+FROM Opportunity WHERE Id = '<OPP_ID>'`},
+{k:'O2',t:'Opportunity products',req:true,sql:`SELECT Id, OpportunityId, Product2.ProductCode, Product2.Family, Product2.Category__c, Product2.License_Type__c,
+       Quantity, TotalPrice, Total_List_Price__c, Total_Discount__c, Subscription_Term__c, Payment_Options__c,
+       ACV_Amount__c, New_Expansion_ACV__c, Subsumed_Renewal_Amount__c, Renewal_ACV__c, Renewal_TCV__c,
+       New_Expansion_TCV__c, Subsumed_Renewal_TCV__c
+FROM OpportunityLineItem WHERE OpportunityId = '<OPP_ID>'`},
+{k:'B1',t:'Booking header(s) – all fields (incl. ACV/TCV header totals)',req:true,sql:`SELECT FIELDS(ALL), RecordType.Name
+FROM Booking__c WHERE Opportunity__c = '<OPP_ID>' LIMIT 200`},
+{k:'B2',t:'Booking line items',req:true,sql:`SELECT Id, Booking__c, Type__c, CCR__c, OrderProduct__c, OrderProduct__r.Opportunity_Product__c,
+       Product_Code__c, Product_Family__c, Product_Category__c, License_Type__c, Product2_Description__c,
+       Product_Payment_Option__c, Subscription_Term__c, Product_Quantity__c, Total_List_Price__c, Total_Discount__c,
+       Total_Price__c, Rebate__c,
+       Impacts_Gross_Bookings__c, Impacts_Net_Bookings__c,
+       Gross_ACV_Amount__c, Net_ACV_Amount__c,
+       Gross_New_Expansion_ACV__c, Net_New_Expansion_ACV__c,
+       Gross_Subsumed_Renewal_ACV__c, Net_Subsumed_Renewal_ACV__c,
+       Gross_Renewal_ACV__c, Net_Renewal_ACV__c, Gross_Renewal_TCV__c, Net_Renewal_TCV__c,
+       New_Expansion_TCV__c, Net_New_Expansion_TCV__c, Subsumed_Renewal_TCV__c, Net_Subsumed_Renewal_TCV__c,
+       Net_TCV_Amount__c,
+       Core_New_Expansion_ACV__c, Cloud_New_Expansion_ACV__c, SaaS_New_Expansion_ACV__c,
+       PLS_New_Expansion_ACV__c, NCD_New_Expansion_ACV__c, Rx_New_Expansion_ACV__c,
+       PromoDiscTCV__c, Oppty_Trade_Up_Discount__c, Prepayment_Credit__c
+FROM Booking_Line_Item__c WHERE Booking__r.Opportunity__c = '<OPP_ID>'`},
+{k:'B4',t:'Order items (qty factor bridge)',req:false,sql:`SELECT Id, OrderId, Order.OrderNumber, Order.Type, Product2.ProductCode, Quantity, TotalPrice, Opportunity_Product__c
+FROM OrderItem WHERE Order.OpportunityId = '<OPP_ID>'`},
+{k:'B3',t:'Booking splits (theatre checks)',req:false,sql:`SELECT Id, Booking__c, Opportunity_Split__c, Sales_Rep__c,
+       Theatre__c, Area__c, Region__c, Territory__c,
+       Opp_PLS_ETM_Theatre__c, Opp_PLS_ETM_Area__c, Opp_PLS_ETM_Region__c, Opp_PLS_ETM_Territory__c,
+       Opp_PLS_NCD_ETM_Theatre__c, Opp_PLS_NCD_ETM_Area__c, Opp_PLS_NCD_ETM_Region__c, Opp_PLS_NCD_ETM_Territory__c,
+       Opp_PLS_SaaS_ETM_Theatre__c, Opp_PLS_SaaS_ETM_Area__c, Opp_PLS_SaaS_ETM_Region__c, Opp_PLS_SaaS_ETM_Territory__c
+FROM Booking_Split__c WHERE Booking__r.Opportunity__c = '<OPP_ID>'`},
+{k:'B5',t:'Booking change history (who changed what)',req:false,sql:`SELECT ParentId, Field, OldValue, NewValue, CreatedDate, CreatedBy.Name
+FROM Booking__History WHERE Parent.Opportunity__c = '<OPP_ID>' ORDER BY CreatedDate DESC LIMIT 200`},
+{k:'O3',t:'Related debooking / split opportunities',req:false,sql:`SELECT Id, Name, StageName, CloseDate, Amount, Opportunity_Type__c, Opportunity_Sub_Type__c, CCR__c,
+       ACV_Amount__c, New_Expansion_ACV__c, Renewal_Subsumed_ACV__c, New_Expansion_TCV__c, Subsumed_Renewal_TCV__c
+FROM Opportunity WHERE Opportunity_Split_Parent__c = '<OPP_ID>' OR CCR__r.Opportunity__c = '<OPP_ID>'`}
+];
+QALL.push({k:'O3',t:'',req:false,sql:`SELECT Id, Name, OwnerId, split__c, Opportunity_Split_Parent__c, Split_percentage__c, Split_Amount__c,
+       ETM_Theatre__c, ETM_Area__c, ETM_Region__c, ETM_Territory__c,
+       Opp_PLS_ETM_Theatre__c, Opp_PLS_ETM_Area__c, Opp_PLS_ETM_Region__c, Opp_PLS_ETM_Territory__c,
+       Opp_PLS_NCD_ETM_Theatre__c, Opp_PLS_NCD_ETM_Area__c, Opp_PLS_NCD_ETM_Region__c, Opp_PLS_NCD_ETM_Territory__c,
+       Opp_PLS_SaaS_ETM_Theatre__c, Opp_PLS_SaaS_ETM_Area__c, Opp_PLS_SaaS_ETM_Region__c, Opp_PLS_SaaS_ETM_Territory__c
+FROM Opportunity WHERE Id = '<OPP_ID>'`});
+// the old related-opportunities O3 is replaced by this TART query
+const _o3=QALL.findIndex(q=>q.k==='O3');if(_o3>=0&&_o3<QALL.length-1)QALL.splice(_o3,1);
+const SHOW=['O1','B1','O2','B2','O3','B3'];
+const PAIRS=[['Header level',['O1','B1']],['Line level',['O2','B2']],['TART / Territory (ETM)',['O3','B3']]];
+const TITLES={O1:'Opportunity – header level',O2:'Opportunity – line level (products)',B1:'Booking – header level',B2:'Booking – line level (booking line items)',B3:'Booking split – territory / ETM fields (Theatre, Area, Region, Territory)',O3:'Opportunity – territory / ETM fields'};
+const Q=SHOW.map(k=>QALL.find(q=>q.k===k)).map(q=>({...q,t:TITLES[q.k]}));
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m||'Copied';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1200)}
+function copyText(txt){
+  const done=()=>toast('Copied');
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(()=>fallback(txt,done));}
+  else fallback(txt,done);
+}
+function fallback(txt,cb){const ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');cb()}catch(e){toast('Select and copy manually')}ta.remove()}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+function genQueries(){
+  const id=document.getElementById('idin').value.trim().replace(/['"]/g,'');
+  const out=document.getElementById('qout');
+  if(!id){out.innerHTML='';return}
+  let html='';
+  const sc=scopeFor(id);
+  window._sc=sc;
+  const label=sc.mode==='opp'?'Opportunity':'Booking';
+  html+=`<div class="card"><div class="row" style="justify-content:space-between"><div><b>${label}:</b> ${esc(id)} <span class="muted">&ndash; ${sc.mode==='opp'?'':'the opportunity is looked up automatically inside each query. '}Run each query, export CSV, paste into tab 2.</span></div><button class="btn sm sec" onclick="copyAll()">Copy all queries</button></div></div>`;
+  const qbox=(k)=>{const q=Q.find(x=>x.k===k);return `<div class="qcol"><div class="qhead"><div class="qtitle">${q.k} &ndash; ${esc(q.t)}</div><button class="btn sm" onclick="copyQ('${q.k}')">Copy</button></div><pre>${esc(buildSql(q,sc))}</pre></div>`};
+  PAIRS.forEach(([title,ks])=>{
+    html+=`<div class="card"><h3>${esc(title)} &ndash; Opportunity | Booking</h3><div class="qpair">${ks.map(qbox).join('')}</div></div>`;
+  });
+  out.innerHTML=html;
+}
+function scopeFor(id){
+  if(/^006/.test(id))return {mode:'opp',val:id};
+  return {mode:'bkg',val:id,sub:`(SELECT Opportunity__c FROM Booking__c WHERE Id = '${id}')`};
+}
+function buildSql(q,sc){
+  if(sc.mode==='opp')return q.sql.replace(/<OPP_ID>/g,sc.val);
+  // Booking__c cannot be filtered by a sub-select on Booking__c itself, so B1 uses the booking's own Id
+  // Same for B2: a semi-join left operand can't be Booking__r.Opportunity__c, so use the booking's own lines
+  if(q.k==='B2')return q.sql.replace(/WHERE Booking__r\.Opportunity__c = '<OPP_ID>'/,"WHERE Booking__c = '"+sc.val+"'");
+  if(q.k==='B3')return q.sql.replace(/WHERE Booking__r\.Opportunity__c = '<OPP_ID>'/,"WHERE Booking__c = '"+sc.val+"'");
+  if(q.k==='B1')return q.sql.replace(/WHERE Opportunity__c = '<OPP_ID>'/,"WHERE Id = '"+sc.val+"'");
+  return q.sql.replace(/= '<OPP_ID>'/g,'IN '+sc.sub);
+}
+function step0(sql,title,msg){return `<div class="card"><div class="qhead"><div class="qtitle">Step 0 &ndash; ${esc(title)}</div><button class="btn sm" onclick="copyText(${JSON.stringify(sql).replace(/"/g,'&quot;')})">Copy</button></div><pre>${esc(sql)}</pre><div class="hint">${msg}</div></div>`}
+function copyQ(k){copyText(buildSql(Q.find(x=>x.k===k),window._sc))}
+function copyAll(){copyText(Q.map(q=>`-- ${q.k}: ${q.t}\n`+buildSql(q,window._sc)+';').join('\n\n'))}
+
+/* ---------- PARSING ---------- */
+function parseDelim(text){
+  text=text.replace(/^﻿/,'').trim();if(!text)return [];
+  const first=text.split(/\r?\n/)[0];
+  const d=(first.split('\t').length>first.split(',').length)?'\t':',';
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++} else q=false } else cur+=c }
+    else{
+      if(c==='"')q=true;
+      else if(c===d){row.push(cur);cur=''}
+      else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur=''}
+      else if(c==='\r'){}
+      else cur+=c;
+    }
+  }
+  row.push(cur);rows.push(row);
+  const hdr=rows[0].map(h=>h.trim());
+  return rows.slice(1).filter(r=>r.some(x=>x.trim()!=='')).map(r=>{const o={};hdr.forEach((h,i)=>{if(h&&h!=='_')o[h]=(r[i]==null?'':r[i].trim())});return o});
+}
+const num=v=>{if(v==null||v==='')return 0;const n=parseFloat(String(v).replace(/,/g,''));return isNaN(n)?0:n};
+const r2=n=>Math.round(n*100)/100;
+const fmt=n=>r2(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+// 'ok' = identical (< 0.005), 'rnd' = differs by a cent only (≤ 0.01, decimal precision/rounding), 'bad' = real value difference (> 0.01)
+const cmpN=(a,b)=>{const d=Math.abs(num(a)-num(b));return d<0.005?'ok':d<=0.0100001?'rnd':'bad'};
+const has=(rows,f)=>rows.length&&Object.prototype.hasOwnProperty.call(rows[0],f);
+const id15=s=>(s||'').slice(0,15);
+
+/* ---------- EXCEL (.xlsx) EXPORT – pure JS, no libraries ---------- */
+const XL_CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function xlCrc(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=XL_CRC[(c^b[i])&0xFF]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+function xlZip(files){ // files: [{name,data(string)}] – stored (no compression)
+  const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+  files.forEach(f=>{
+    const nb=enc.encode(f.name),db=enc.encode(f.data),crc=xlCrc(db);
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(8,0,true);lh.setUint16(10,0,true);lh.setUint16(12,0x21,true);
+    lh.setUint32(14,crc,true);lh.setUint32(18,db.length,true);lh.setUint32(22,db.length,true);lh.setUint16(26,nb.length,true);lh.setUint16(28,0,true);
+    parts.push(new Uint8Array(lh.buffer),nb,db);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(10,0,true);ch.setUint16(12,0,true);ch.setUint16(14,0x21,true);
+    ch.setUint32(16,crc,true);ch.setUint32(20,db.length,true);ch.setUint32(24,db.length,true);ch.setUint16(28,nb.length,true);ch.setUint32(42,off,true);
+    cd.push(new Uint8Array(ch.buffer),nb);
+    off+=30+nb.length+db.length;
+  });
+  const cdLen=cd.reduce((s,x)=>s+x.length,0);
+  const e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cdLen,true);e.setUint32(16,off,true);
+  return new Blob(parts.concat(cd,[new Uint8Array(e.buffer)]),{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+const xlEsc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'');
+function xlCol(n){let s='';n++;while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s}
+// cell = plain value or {v,s}; s: 0 none,1 header,2 red,3 green,4 yellow,5 banner red,6 banner green,7 bold
+function xlSheetXml(rows){
+  const widths=[];
+  const xml=rows.map((r,ri)=>{
+    const cells=(r||[]).map((c,ci)=>{
+      if(c===null||c===undefined||c==='')return '';
+      const o=(typeof c==='object')?c:{v:c,s:0};const isNum=typeof o.v==='number'&&isFinite(o.v);
+      const len=String(o.v).length;widths[ci]=Math.min(60,Math.max(widths[ci]||8,len+2));
+      const ref=xlCol(ci)+(ri+1),st=(o.s||0)+(isNum?8:0);
+      return isNum?'<c r="'+ref+'" s="'+st+'"><v>'+o.v+'</v></c>':'<c r="'+ref+'" s="'+st+'" t="inlineStr"><is><t xml:space="preserve">'+xlEsc(o.v)+'</t></is></c>';
+    }).join('');
+    return '<row r="'+(ri+1)+'">'+cells+'</row>';
+  }).join('');
+  const cols=widths.map((w,i)=>'<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+(w||8)+'" customWidth="1"/>').join('');
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"/></sheetViews>'+(cols?'<cols>'+cols+'</cols>':'')+'<sheetData>'+xml+'</sheetData></worksheet>';
+}
+function xlStylesXml(){
+  const fills=['<fill><patternFill patternType="none"/></fill>','<fill><patternFill patternType="gray125"/></fill>',
+    ...['D9E1F2','FFC7CE','C6EFCE','FFEB9C','C00000','00A050'].map(c=>'<fill><patternFill patternType="solid"><fgColor rgb="FF'+c+'"/><bgColor indexed="64"/></patternFill></fill>')];
+  const fonts=['<font><sz val="11"/><name val="Calibri"/></font>','<font><b/><sz val="11"/><name val="Calibri"/></font>','<font><b/><sz val="12"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>'];
+  // base style -> [fontId, fillId]
+  const base=[[0,0],[1,2],[0,3],[0,4],[0,5],[2,6],[2,7],[1,0]];
+  const xfs=[];
+  [0,4].forEach(nf=>base.forEach(([f,fl])=>xfs.push('<xf numFmtId="'+nf+'" fontId="'+f+'" fillId="'+fl+'" borderId="0" xfId="0" applyFont="1" applyFill="1"'+(nf?' applyNumberFormat="1"':'')+'/>')));
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="'+fonts.length+'">'+fonts.join('')+'</fonts><fills count="'+fills.length+'">'+fills.join('')+'</fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="'+xfs.length+'">'+xfs.join('')+'</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+}
+function xlBuild(sheets){
+  const names=sheets.map((s,i)=>{let n=String(s.name).replace(/[\[\]:*?\/\\]/g,'-').slice(0,31)||('Sheet'+(i+1));return n});
+  const files=[
+   {name:'[Content_Types].xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+sheets.map((s,i)=>'<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join('')+'</Types>'},
+   {name:'_rels/.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+   {name:'xl/workbook.xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+names.map((n,i)=>'<sheet name="'+xlEsc(n)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>').join('')+'</sheets></workbook>'},
+   {name:'xl/_rels/workbook.xml.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map((s,i)=>'<Relationship Id="rId'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>').join('')+'<Relationship Id="rId'+(sheets.length+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
+   {name:'xl/styles.xml',data:xlStylesXml()}
+  ].concat(sheets.map((s,i)=>({name:'xl/worksheets/sheet'+(i+1)+'.xml',data:xlSheetXml(s.rows)})));
+  return xlZip(files);
+}
+function xlDownload(sheets,fname){
+  try{const blob=xlBuild(sheets);const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;document.body.appendChild(a);a.click();a.remove();toast('Downloading Excel…')}
+  catch(e){toast('Excel download failed: '+e.message)}
+}
+// Data Load tabs: one tab per object (Data Loader = one object per file); if nothing to load, a single tab says so.
+function xlLoadSheets(loadMap,labels){labels=labels||{};
+  const objs=Object.keys(loadMap).filter(o=>loadMap[o]&&loadMap[o].length);
+  if(!objs.length)return [{name:'Data Load',rows:[[{v:'NO DATA LOAD NEEDED',s:6}],[],['No record needs to be updated for the checks that were run.']]}];
+  return objs.map(o=>{
+    const recs=loadMap[o];const cols=[];recs.forEach(r=>Object.keys(r.upd).forEach(c=>{if(!cols.includes(c))cols.push(c)}));
+    const rows=[[{v:'DATA LOAD NEEDED – Update → '+(labels[o]||o)+' ('+recs.length+' record'+(recs.length>1?'s':'')+'): only records that need an update are listed. Load this tab as CSV.',s:5}],[],['Id'].concat(cols).map(c=>({v:c,s:1}))];
+    recs.forEach(r=>rows.push([r.Id].concat(cols.map(c=>r.upd[c]===undefined||r.upd[c]===''?'':(typeof r.upd[c]==='number'?Math.round(r.upd[c]*100)/100:r.upd[c])))));
+    return {name:'Data Load - '+o.replace(/__c$/,''),rows};
+  });
+}
+const xlSt=(st,rnd)=>st==='bad'?{t:'MISMATCH',s:2}:rnd?{t:'Rounding only (±0.01)',s:4}:st==='ok'?{t:'Match',s:3}:{t:st==='info'?'Info / not compared':'Blank on opportunity – not synced',s:0};
+function xlCompareSheets(R){
+  const L=R.loads||{};const need=Object.keys(L).length>0;
+  const rows=[[{v:need?'DATA LOAD NEEDED':'NO DATA LOAD NEEDED',s:need?5:6},{v:R.title,s:7}],[],
+    ['Section','Record','Opportunity line Id','Booking line Id','Opportunity field','Opportunity value','Booking field','Booking value','Diff','Status','Data load?'].map(c=>({v:c,s:1}))];
+  const push=(sec,rec,oli,bli,of,ov,bf,bv,diff,st,rnd,dl)=>{const x=xlSt(st,rnd);rows.push([sec,rec,oli,bli,of,ov,bf,bv,diff,{v:x.t,s:x.s},{v:dl?'YES':'no',s:dl?2:3}].map((c,i)=>(i<9&&x.s&&st==='bad'&&i>=5&&i<=8)?{v:c,s:2}:c))};
+  const B1id=R.B1?R.B1.Id:'';
+  (R.hdrAll||[]).forEach(r=>push('Header',B1id,'','',r.of,r.opp,r.bf,r.bkg,'',r.st,false,r.st==='bad'&&R.loadIds.has(B1id)));
+  (R.hdrMet||[]).forEach(r=>push('Header ACV/TCV',B1id,'','',r.of||'',r.opp===null?'':Math.round(r.opp*100)/100,r.bf,Math.round(r.bkg*100)/100,r.opp===null?'':Math.round((r.bkg-r.opp)*100)/100,r.st,r.rnd,r.st==='bad'&&!!(L['Booking__c']&&L['Booking__c'][0]&&r.bf in L['Booking__c'][0].upd)));
+  (R.lineAll||[]).forEach(r=>push('Line',r.line,r.oli,r.bli,r.of,r.opp,r.bf,r.bkg,r.diff,r.st,r.rnd,r.st==='bad'&&R.loadIds.has(r.bli)));
+  (R.splitAll||[]).forEach(r=>push('Territory',r.split,'','',r.of,r.opp,r.bf,r.bkg,'',r.st,false,r.st==='bad'&&R.loadIds.has(r.split)));
+  (R.totDiffs||[]).forEach(r=>rows.push(['Totals',r.label,'','','Opp header',Math.round(r.hdr*100)/100,'Σ opp lines / Σ booking lines',(r.sumO===null?'—':Math.round(r.sumO*100)/100)+' / '+(r.sumB===null?'—':Math.round(r.sumB*100)/100),'',{v:r.any?'MISMATCH':'Match',s:r.any?2:3},'']));
+  return [{name:'Comparison',rows}].concat(xlLoadSheets(L));
+}
+function dlXlsx(which){
+  if(which==='c'&&window._R){xlDownload(xlCompareSheets(window._R),'oppty_booking_comparison.xlsx')}
+  else if(which==='r'&&window._rbx){xlDownload(window._rbx(),'rebate_check.xlsx')}
+  else if(which==='d'&&window._dbx){xlDownload(window._dbx(),'debooking_review.xlsx')}
+}
+const XL_BTN=w=>'<div class="row" style="margin:0 0 10px"><button class="btn" onclick="dlXlsx(\''+w+'\')">⬇ Download Excel (Comparison + Data Load tab)</button><span class="muted">Tab 1 = full results with highlights · Tab 2 = only the records that need a data load (or “NO DATA LOAD NEEDED”)</span></div>';
+
+/* ---------- COMPARE ---------- */
+const HEADER_MAP=[
+ ['CloseDate','Opportunity_Close_Date__c','date'],
+ ['Opportunity_Type__c','Opportunity_Type__c'],
+ ['Opportunity_Sub_Type__c','Opportunity_Sub_Type__c'],
+ ['Deal_Registration_Type__c','Deal_Registration_Type__c'],
+ ['split__c','Opportunity_Split__c'],
+ ['Partner_Lookup__c','Partner_Name__c','id'],
+ ['OwnerId','OwnerId','id'],
+ ['Owner.EmployeeNumber','Opportunity_Owner_Employee_ID__c'],
+ ['SecondaryOwner__c','Secondary_Owner__c','id'],
+ ['RenewalOwner__c','Renewal_Opportunity_Owner__c','id'],
+ ['Rubrik_Sales_Engineer__c','Sales_Engineer__c','id'],
+ ['SDR_Led__c','SDR_Led__c','bool'],
+ ['SE_Misaligned__c','SE_Misaligned__c','bool'],
+ ['Strategic_Account__c','Strategic_Account__c','bool'],
+ ['Alliance_Partner_Name__c','Alliance_Partner_Name__c'],
+ ['Alliance_HW_Partner__c','Alliance_HW_Partner__c'],
+ ['ISR_SDR_Oppty_Credit_Total__c','ISR_SDR_Oppty_Credit_Total_c__c','n'],
+ ['OriginalLeadOwner__c','Original_Lead_Owner__c','id'],
+ ['Account.R2K_All__c','R2K__c']
+];
+const LINE_MAP=[ // OLI field -> BLI gross field, scaled by qty factor
+ ['TotalPrice','Total_Price__c'],
+ ['ACV_Amount__c','Gross_ACV_Amount__c'],
+ ['New_Expansion_ACV__c','Gross_New_Expansion_ACV__c'],
+ ['Subsumed_Renewal_Amount__c','Gross_Subsumed_Renewal_ACV__c'],
+ ['Renewal_ACV__c','Gross_Renewal_ACV__c'],
+ ['Renewal_TCV__c','Gross_Renewal_TCV__c'],
+ ['New_Expansion_TCV__c','New_Expansion_TCV__c'],
+ ['Subsumed_Renewal_TCV__c','Subsumed_Renewal_TCV__c'],
+ ['Core_New_Expansion_ACV__c','Core_New_Expansion_ACV__c'],
+ ['NAS_New_Expansion_ACV__c','Cloud_New_Expansion_ACV__c'],
+ ['SaaS_New_Expansion_ACV__c','SaaS_New_Expansion_ACV__c'],
+ ['PLS_New_Expansion_ACV__c','PLS_New_Expansion_ACV__c'],
+ ['PLS_NCD_New_Expansion_ACV__c','NCD_New_Expansion_ACV__c'],
+ ['Rx_New_Expansion_ACV__c','Rx_New_Expansion_ACV__c'],
+ ['PromoDiscTCV__c','PromoDiscTCV__c'],
+ ['Oppty_Trade_Up_Discount__c','Oppty_Trade_Up_Discount__c'],
+ ['Prepayment_Credit__c','Prepayment_Credit__c']
+];
+const ATTR_MAP=[ // descriptive line attributes copied OrderItem/Product -> BLI (compared as-is)
+ ['Product2.ProductCode','Product_Code__c'],['Product2.Family','Product_Family__c'],['Product2.Category__c','Product_Category__c'],['Product2.License_Type__c','License_Type__c'],
+ ['Payment_Options__c','Product_Payment_Option__c'],['Subscription_Term__c','Subscription_Term__c','n'],['Total_Discount__c','Total_Discount__c','n']];
+const NET_MAP=[['Total_Price__c','Net_TCV_Amount__c'],['Gross_ACV_Amount__c','Net_ACV_Amount__c'],['Gross_New_Expansion_ACV__c','Net_New_Expansion_ACV__c'],['Gross_Subsumed_Renewal_ACV__c','Net_Subsumed_Renewal_ACV__c'],['Gross_Renewal_ACV__c','Net_Renewal_ACV__c'],['Gross_Renewal_TCV__c','Net_Renewal_TCV__c'],['New_Expansion_TCV__c','Net_New_Expansion_TCV__c'],['Subsumed_Renewal_TCV__c','Net_Subsumed_Renewal_TCV__c']];
+const TOTAL_MAP=[ // opp header field, label, OLI field, BLI field
+ ['ACV_Amount__c','ACV','ACV_Amount__c','Gross_ACV_Amount__c'],
+ ['New_Expansion_ACV__c','New/Expansion ACV','New_Expansion_ACV__c','Gross_New_Expansion_ACV__c'],
+ ['Renewal_Subsumed_ACV__c','Subsumed Renewal ACV','Subsumed_Renewal_Amount__c','Gross_Subsumed_Renewal_ACV__c'],
+ ['Renewal_ACV__c','Renewal ACV','Renewal_ACV__c','Gross_Renewal_ACV__c'],
+ ['New_Expansion_TCV__c','New/Expansion TCV','New_Expansion_TCV__c','New_Expansion_TCV__c'],
+ ['Subsumed_Renewal_TCV__c','Subsumed Renewal TCV','Subsumed_Renewal_TCV__c','Subsumed_Renewal_TCV__c'],
+ ['Renewal_TCV__c','Renewal TCV','Renewal_TCV__c','Gross_Renewal_TCV__c']
+];
+const SPLIT_MAP=[['Split_percentage__c','Opportunity_Split__c','n'],['OwnerId','Sales_Rep__c','id'],['ETM_Theatre__c','Theatre__c'],['ETM_Area__c','Area__c'],['ETM_Region__c','Region__c'],['ETM_Territory__c','Territory__c'],
+ ['Opp_PLS_ETM_Theatre__c','Opp_PLS_ETM_Theatre__c'],['Opp_PLS_ETM_Area__c','Opp_PLS_ETM_Area__c'],['Opp_PLS_ETM_Region__c','Opp_PLS_ETM_Region__c'],['Opp_PLS_ETM_Territory__c','Opp_PLS_ETM_Territory__c'],
+ ['Opp_PLS_NCD_ETM_Theatre__c','Opp_PLS_NCD_ETM_Theatre__c'],['Opp_PLS_NCD_ETM_Area__c','Opp_PLS_NCD_ETM_Area__c'],['Opp_PLS_NCD_ETM_Region__c','Opp_PLS_NCD_ETM_Region__c'],['Opp_PLS_NCD_ETM_Territory__c','Opp_PLS_NCD_ETM_Territory__c'],
+ ['Opp_PLS_SaaS_ETM_Theatre__c','Opp_PLS_SaaS_ETM_Theatre__c'],['Opp_PLS_SaaS_ETM_Area__c','Opp_PLS_SaaS_ETM_Area__c'],['Opp_PLS_SaaS_ETM_Region__c','Opp_PLS_SaaS_ETM_Region__c'],['Opp_PLS_SaaS_ETM_Territory__c','Opp_PLS_SaaS_ETM_Territory__c']];
+
+function normStr(v,type){
+  v=(v==null?'':String(v)).trim();
+  if(type==='date')return v.slice(0,10);
+  if(type==='id')return id15(v);
+  if(type==='bool')return (v==='true'||v==='TRUE'||v==='1')?'true':'false';
+  if(type==='n')return String(r2(num(v)));
+  return v;
+}
+
+function compare(D){
+  const F=[];            // findings: {sev:'bad'|'warn'|'ok', text}
+  const hdrDiffs=[],lineDiffs=[],totDiffs=[],splitDiffs=[],netDiffs=[],notes=[],rndList=[];
+  const hdrAll=[],lineAll=[],splitAll=[]; // side-by-side rows (match + mismatch)
+  const O1=D.O1[0]||{},B1all=D.B1,OLI=D.O2,BLI=D.B2,OI=D.B4,SPL=D.B3;
+  if(!D.O1.length&&!B1all.length&&!OLI.length&&!BLI.length&&!OI.length&&!SPL.length){return {error:'Paste at least one query result.'}}
+  if(!B1all.length&&!BLI.length&&!SPL.length&&(D.O1.length||OLI.length)){
+    return {verdict:'warn',title:'No booking data provided (or no booking exists for this opportunity)',diffs:{},causes:[
+      'If the B1/B2 queries returned 0 rows, the won opportunity has no Booking__c: the order may never have been booked or the booking batch failed. Check the Order BookingStatus and BookingBatch errors (Custom_Error_Log__c).'],extra:['SELECT Id, OrderNumber, BookingStatus__c FROM Order WHERE OpportunityId = \''+(O1.Id||'<OPP_ID>')+'\'']};
+  }
+  // pick main booking
+  let B1=B1all.find(b=>(b['RecordType.Name']||'')==='Booking')||B1all[0];
+  const status=B1?(B1['Field_Update_Status__c']||''):'';
+  const frozen=!!status;
+  if(B1all.length>1)notes.push(B1all.length+' booking records found (adjustments/debookings included). Header compared against the one with RecordType = Booking.');
+
+  // HEADER
+  if(B1){
+    HEADER_MAP.forEach(([of,bf,type])=>{
+      if(!has([O1],of)||!has([B1],bf))return;
+      const ov=normStr(O1[of],type),bv=normStr(B1[bf],type);
+      const st=(ov===''&&bv!=='')?'info':(ov!==bv?'bad':'ok'); // blank opp value never overwrites booking
+      hdrAll.push({of,bf,opp:O1[of],bkg:B1[bf],st});
+      if(st==='bad')hdrDiffs.push({field:of+' → '+bf,opp:O1[of],bkg:B1[bf]});
+    });
+    if(hdrDiffs.length){
+      F.push({sev:'bad',text:hdrDiffs.length+' header field(s) differ between Opportunity and Booking.'});
+    }
+  }
+
+  // QTY FACTOR + LINES
+  const oliById={};OLI.forEach(o=>oliById[o.Id]=o);
+  const oiById={};OI.forEach(o=>oiById[o.Id]=o);
+  const bliRev=BLI.filter(b=>(b['Type__c']||'Revenue')==='Revenue');
+  const bliOther=BLI.filter(b=>(b['Type__c']||'Revenue')!=='Revenue');
+  const matchedOli=new Set();let matchedByCode=0;const pairsList=[];
+  const fee=BLI.find(b=>(b['Type__c']||'')==='Distributor Fee');
+  const rebate=fee?num(fee['Rebate__c']):0;
+  // HEADER-LEVEL ACV / TCV METRICS (layout = Booking record page): Opportunity header vs Booking header.
+  // Booking side = booking header field when it was queried (B1 FIELDS(ALL)), else Σ of the booking lines (the header is a roll-up).
+  const hdrMet=[];const hdrUnmapped=[];
+  {
+    const nn=s=>String(s).toLowerCase().replace(/__c$/,'').replace(/[^a-z0-9]/g,'');
+    // def: [label, oppField|null, kind('G' gross | 'N' net | 'X' other), bookingLineField, [normalised booking header field candidates], [opportunity field candidates for expected value]]
+    const ROWS=[
+     ['TCV Metrics',[
+      [['Gross TCV Total','Amount','G','Total_Price__c',['grosstcvtotal','grosstcvamount','grosstcv','totaltcv']],['Net TCV Total','Amount','N','Net_TCV_Amount__c',['nettcvtotal','nettcvamount','nettcv']]],
+      [['Gross New/Expansion TCV','New_Expansion_TCV__c','G','New_Expansion_TCV__c',['grossnewexpansiontcv','newexpansiontcv']],['Net New/Expansion TCV','New_Expansion_TCV__c','N','Net_New_Expansion_TCV__c',['netnewexpansiontcv']]],
+      [['Gross Renewal Subsumed TCV','Subsumed_Renewal_TCV__c','G','Subsumed_Renewal_TCV__c',['grosssubsumedrenewaltcv','grossrenewalsubsumedtcv','subsumedrenewaltcv']],['Net Renewal Subsumed TCV','Subsumed_Renewal_TCV__c','N','Net_Subsumed_Renewal_TCV__c',['netsubsumedrenewaltcv','netrenewalsubsumedtcv']]],
+      [['Trade-up Credit TCV','Oppty_Trade_Up_Discount__c','X','Oppty_Trade_Up_Discount__c',['tradeupcredittcv','tradeupcredit','opptytradeupdiscount','tradeupdiscount']],['Promo Discount TCV','PromoDiscTCV__c','X','PromoDiscTCV__c',['promodisctcv','promodiscounttcv','promodisc']]],
+      [['Prepayment Credit TCV','Prepayment_Credit__c','X','Prepayment_Credit__c',['prepaymentcredittcv','prepaymentcredit']],['Net Renewal TCV','Renewal_TCV__c','N','Net_Renewal_TCV__c',['netrenewaltcv']]],
+      [['Gross Renewal TCV','Renewal_TCV__c','G','Gross_Renewal_TCV__c',['grossrenewaltcv']],null]]],
+     ['ACV Metrics',[
+      [['Gross ACV Total','ACV_Amount__c','G','Gross_ACV_Amount__c',['grossacvtotal','grossacvamount','grossacv']],['Net ACV Total','ACV_Amount__c','N','Net_ACV_Amount__c',['netacvtotal','netacvamount','netacv']]],
+      [['Gross New/Expansion ACV','New_Expansion_ACV__c','G','Gross_New_Expansion_ACV__c',['grossnewexpansionacv']],['Net New/Expansion ACV','New_Expansion_ACV__c','N','Net_New_Expansion_ACV__c',['netnewexpansionacv']]],
+      [['Gross Renewal Subsumed ACV','Renewal_Subsumed_ACV__c','G','Gross_Subsumed_Renewal_ACV__c',['grosssubsumedrenewalacv','grossrenewalsubsumedacv']],['Net Renewal Subsumed ACV','Renewal_Subsumed_ACV__c','N','Net_Subsumed_Renewal_ACV__c',['netsubsumedrenewalacv','netrenewalsubsumedacv']]],
+      [['Gross Renewal ACV','Renewal_ACV__c','G','Gross_Renewal_ACV__c',['grossrenewalacv']],['Net Renewal ACV','Renewal_ACV__c','N','Net_Renewal_ACV__c',['netrenewalacv']]],
+      [['Rx New/Expansion ACV','Rx_New_Expansion_ACV__c','X','Rx_New_Expansion_ACV__c',['rxnewexpansionacv']],null]]]
+    ];
+    const gBLI=BLI.filter(b=>(b['Impacts_Gross_Bookings__c']||'true')==='true');
+    const nBLI=BLI.filter(b=>(b['Impacts_Net_Bookings__c']||'true')==='true'&&(b['Type__c']||'')!=='Distributor Fee');
+    const bmap={};if(B1)Object.keys(B1).forEach(k=>{if(!(nn(k) in bmap))bmap[nn(k)]=k});
+    const used=new Set();
+    // net factor: from the Distributor Fee line; if none was provided, implied by the booking header Net/Gross TCV totals
+    let netFactor=(100-rebate)/100,rebTxt=rebate+'%';
+    if(!fee&&B1){const gf=bmap['grosstcvtotal']||bmap['grosstcvamount'],nf2=bmap['nettcvtotal']||bmap['nettcvamount'];
+      if(gf&&nf2&&num(B1[gf])!==0){netFactor=num(B1[nf2])/num(B1[gf]);rebTxt=(Math.round((1-netFactor)*10000)/100)+'% (implied by the booking header Net ÷ Gross TCV – no Distributor Fee line provided)';notes.push('Header net check: rebate '+rebTxt+'.')}}
+    ROWS.forEach(([sec,rws],ri)=>rws.forEach((pair,pi)=>pair.forEach((def,ci)=>{
+      if(!def)return;
+      const [label,of,kind,lineF,cands]=def;
+      const hf=cands.map(c=>bmap[c]).find(Boolean);
+      let bv=null,src='';
+      if(hf){bv=num(B1[hf]);src='Booking header field '+hf;used.add(hf)}
+      else if(BLI.length&&has(BLI,lineF)){bv=(kind==='N'?nBLI:gBLI).reduce((s,b)=>s+num(b[lineF]),0);src='Σ booking lines ('+lineF+')'}
+      if(bv===null)return;
+      const hasOpp=of&&has([O1],of);
+      let ov=null,st='info',rnd=false,oppNote='';
+      if(hasOpp){
+        ov=num(O1[of]);
+        if(kind==='N'){ov=r2(ov*netFactor);oppNote='; opportunity side = '+of+' × (100 − rebate '+rebTxt+') ÷ 100'}
+        const c=cmpN(ov,bv);st=c==='bad'?'bad':'ok';rnd=c==='rnd';
+      }
+      hdrMet.push({sec,row:ri*100+pi,col:ci,label,of:of||'',bf:hf||lineF,opp:ov,bkg:bv,src:src+oppNote+(hasOpp?'':' – no opportunity header field to compare'),st,rnd});
+    })));
+    // booking header columns that look like ACV/TCV metrics but were not mapped (so the mapping can be extended)
+    if(B1)Object.keys(B1).forEach(k=>{if(/(tcv|acv)/i.test(k)&&!used.has(k))hdrUnmapped.push(k)});
+    const hb=hdrMet.filter(r=>r.st==='bad');
+    if(hb.length)F.push({sev:'bad',text:hb.length+' header-level ACV/TCV value(s) differ between Opportunity and Booking: '+hb.slice(0,6).map(r=>r.label).join(', ')+(hb.length>6?' …':'')+'.'});
+    if(hdrMet.length&&!hdrMet.some(r=>/^Booking header field/.test(r.src)))notes.push('Header ACV/TCV: the Booking side is the sum of the booking lines because no booking header ACV/TCV fields were found in B1. Run B1 (it now uses FIELDS(ALL)) so the real header fields are compared.');
+    if(hdrUnmapped.length)notes.push('Booking header columns with TCV/ACV in the name that are not in the header metrics layout: '+hdrUnmapped.join(', ')+'.');
+    if(hdrMet.some(r=>r.rnd))notes.push('ROUNDING ONLY at header level: '+hdrMet.filter(r=>r.rnd).length+' ACV/TCV value(s) differ by 0.01 or less – decimal precision, not a real difference.');
+  }
+  bliRev.forEach(b=>{
+    const oliId=b['OrderProduct__r.Opportunity_Product__c']||(oiById[b['OrderProduct__c']]||{})['Opportunity_Product__c']||'';
+    let o=oliById[oliId];
+    const label=b['Product_Code__c']||oliId||b.Id;
+    if(!o){ // no order-item link in the data: match by product code, best amount fit
+      const code=b['Product_Code__c'];
+      const cands=OLI.filter(x=>!matchedOli.has(x.Id)&&code&&x['Product2.ProductCode']===code);
+      if(cands.length){
+        const bq0=num(b['Product_Quantity__c']);
+        const score=x=>{const f=(num(x.Quantity)&&bq0)?bq0/num(x.Quantity):1;return LINE_MAP.reduce((s,[of,bf])=>(has([x],of)&&has([b],bf))?s+Math.abs(num(x[of])*f-num(b[bf])):s,0)};
+        o=cands.sort((p,q)=>score(p)-score(q))[0];
+        matchedByCode++;
+      }
+    }
+    if(!o){lineDiffs.push({line:label,field:'(no matching opportunity line)',opp:'—',bkg:'BLI '+b.Id,diff:''});lineAll.push({line:label,oli:'—',bli:b.Id,of:'(no matching opportunity line)',bf:'BLI '+b.Id,opp:'—',bkg:'ACV '+fmt(num(b['Gross_ACV_Amount__c'])),diff:'',st:'bad'});return;}
+    matchedOli.add(o.Id);
+    const oi=oiById[b['OrderProduct__c']];
+    const oq=num(o.Quantity);
+    const bq=oi?num(oi.Quantity):num(b['Product_Quantity__c']);
+    const factor=(oq!==0&&bq)?bq/oq:1;
+    pairsList.push({b,o,factor});
+    LINE_MAP.forEach(([of,bf])=>{
+      if(!has([o],of)||!has([b],bf))return;
+      const gross=!/PromoDisc|Trade_Up|Prepayment/.test(of);
+      let exp=num(o[of])*factor; if(gross)exp=r2(exp);
+      const act=num(b[bf]);
+      const c1=cmpN(exp,act),bad1=c1==='bad';
+      if(c1==='rnd')rndList.push(label+' · '+of+' → '+bf+' ('+fmt(exp)+' vs '+fmt(act)+')');
+      lineAll.push({line:label,oli:o.Id,bli:b.Id,of,bf,opp:fmt(exp)+(factor!==1?' (×'+r2(factor)+')':''),bkg:fmt(act),diff:c1!=='ok'?fmt(act-exp):'',st:bad1?'bad':'ok',rnd:c1==='rnd'});
+      if(bad1)lineDiffs.push({line:label,field:of+' → '+bf,opp:fmt(exp)+(factor!==1?' (×'+r2(factor)+')':''),bkg:fmt(act),diff:fmt(act-exp)});
+    });
+    ATTR_MAP.forEach(([of,bf,type])=>{
+      if(!has([o],of)||!has([b],bf))return;
+      const ov=normStr(o[of],type),bv=normStr(b[bf],type);
+      if(ov===''&&bv==='')return;
+      const badA=type==='n'?cmpN(num(o[of]),num(b[bf]))==='bad':ov!==bv;
+      lineAll.push({line:label,oli:o.Id,bli:b.Id,of,bf,opp:o[of],bkg:b[bf],diff:'',st:badA?'bad':'ok'});
+      if(badA)lineDiffs.push({line:label,field:of+' → '+bf,opp:o[of],bkg:b[bf],diff:''});
+    });
+    // net check
+    NET_MAP.forEach(([g,n])=>{
+      if(!has([b],g)||!has([b],n))return;
+      const exp=r2(num(b[g])*(100-rebate)/100),act=num(b[n]);
+      const cN=cmpN(exp,act),badN=cN==='bad';
+      if(cN==='rnd')rndList.push(label+' · '+n+' ('+fmt(exp)+' vs '+fmt(act)+')');
+      lineAll.push({line:label,oli:o.Id,bli:b.Id,of:'Net check: '+g+' × (100−'+rebate+'%)',bf:n,opp:fmt(exp),bkg:fmt(act),diff:cN!=='ok'?fmt(act-exp):'',st:badN?'bad':'ok',rnd:cN==='rnd'});
+      if(badN)netDiffs.push({line:label,field:n,opp:fmt(exp)+' (gross × (100−'+rebate+'%))',bkg:fmt(act),diff:fmt(act-exp)});
+    });
+  });
+  OLI.forEach(o=>{if(!matchedOli.has(o.Id)&&(num(o.TotalPrice)!==0||num(o.ACV_Amount__c)!==0)){lineDiffs.push({line:(o['Product2.ProductCode']||o.Id),field:'(opportunity line has no booking line)',opp:'ACV '+fmt(num(o.ACV_Amount__c)),bkg:'—',diff:''});lineAll.push({line:(o['Product2.ProductCode']||o.Id),oli:o.Id,bli:'—',of:'(opportunity line has no booking line)',bf:'—',opp:'ACV '+fmt(num(o.ACV_Amount__c)),bkg:'—',diff:'',st:'bad'})}});
+  if(bliOther.length)notes.push(bliOther.length+' non-revenue booking line(s) (Type: '+[...new Set(bliOther.map(b=>b.Type__c))].join(', ')+') – debooking/CCR/referral fee/fee lines excluded from line match but included in totals if they impact gross bookings.');
+  if(rebate)notes.push('Distributor rebate '+rebate+'% applies – net amounts are expected to be lower than gross.');
+  if(matchedByCode)notes.push(matchedByCode+' booking line(s) matched to opportunity lines by product code (the OrderProduct → Opportunity Product link was not in the data). No order items needed.');
+  if(!OI.length)notes.push('Quantity factor taken from booking line Product_Quantity__c ÷ opportunity line Quantity (no order items needed).');
+
+  if(rndList.length)notes.push('ROUNDING ONLY (not a real value difference): '+rndList.length+' value(s) differ by 0.01 or less due to decimal precision/rounding and are treated as a match – no data load needed for them. '+rndList.slice(0,6).join('; ')+(rndList.length>6?' …':''));
+  // TOTALS
+  TOTAL_MAP.forEach(([hf,label,of,bf])=>{
+    if(!has([O1],hf))return;
+    const h=num(O1[hf]);
+    const sumB=(BLI.length&&has(BLI,bf))?BLI.filter(b=>(b['Impacts_Gross_Bookings__c']||'true')==='true').reduce((s,b)=>s+num(b[bf]),0):null;
+    const sumO=has(OLI,of)?OLI.reduce((s,o)=>s+num(o[of]),0):null;
+    if(sumB===null&&sumO===null)return; // header-only run: nothing to tie out against
+    const row={label,hdr:h,sumO,sumB};
+    row.hB=sumB!==null&&cmpN(h,sumB)==='bad';
+    row.hO=sumO!==null&&cmpN(h,sumO)==='bad';
+    row.oB=sumO!==null&&sumB!==null&&cmpN(sumO,sumB)==='bad';
+    row.any=row.hB||row.hO||row.oB;
+    totDiffs.push(row);
+  });
+  const totBad=totDiffs.filter(r=>r.any);
+
+  // SPLIT
+  if(SPL.length){
+    SPL.forEach(s=>{SPLIT_MAP.forEach(([of,bf,type])=>{
+      if(!has([O1],of)||!has([s],bf))return;
+      const ov=normStr(O1[of],type),sv=normStr(s[bf],type);
+      const bs=type==='n'?cmpN(num(O1[of]),num(s[bf]))==='bad':ov!==sv;
+      splitAll.push({of,bf,opp:O1[of]||'',bkg:s[bf]||'',st:bs?'bad':'ok',split:s.Id});
+      if(bs)splitDiffs.push({field:of+' → '+bf,opp:O1[of]||'',bkg:s[bf]||'',split:s.Id});
+    })});
+  }
+
+  // TIMING
+  let timing='';
+  if(B1&&O1.LastModifiedDate&&B1.LastModifiedDate){
+    const od=new Date(O1.LastModifiedDate),bd=new Date(B1.LastModifiedDate);
+    if(!isNaN(od)&&!isNaN(bd)&&od>bd)timing='Opportunity was modified ('+O1.LastModifiedDate+') after the Booking ('+B1.LastModifiedDate+').';
+  }
+
+  // CAUSES
+  const causes=[],extra=[];
+  if(frozen&&hdrDiffs.length)causes.push('Booking Field Update Status = "'+status+'" → header sync is stopped. The opportunity was edited after freeze, so the booking will not pick it up. Needs a manual booking correction by ProdOps / recon.');
+  if(!frozen&&hdrDiffs.length){causes.push('Booking is not frozen but headers differ → BookingSyncBatch has not run since the opportunity change, or it failed.'+(timing?' '+timing:''));extra.push('Check AsyncApexJob for BookingSyncBatch and Custom_Error_Log__c for errors around the opportunity\'s last modified time.');}
+  if(B1&&B1['Opportunity_Close_Date__c']&&O1.CloseDate&&normStr(O1.CloseDate,'date')!==normStr(B1['Opportunity_Close_Date__c'],'date'))causes.push('Close date drift: may be a legitimate back-dated booking-date correction, or a frozen booking.');
+  const missingBli=lineDiffs.filter(d=>/no booking line/.test(d.field)),orphan=lineDiffs.filter(d=>/no matching opportunity/.test(d.field)),valDiffs=lineDiffs.filter(d=>!/no booking line|no matching/.test(d.field));
+  if(missingBli.length)causes.push('Opportunity line(s) with no booking line: order item excluded, BLI insert failed/deleted, or order not fully booked.');
+  if(orphan.length)causes.push('Booking line(s) with no matching opportunity line (no link and no opportunity line with the same product code): '+orphan.map(o=>o.line).join(', ')+' – extra/manually added order item, or the product was removed from the opportunity.');
+  if(valDiffs.length)causes.push('Booking line amounts differ from opportunity line × quantity factor: booking lines were created before the opportunity line was edited (stale lines), or amounts were adjusted manually. Check B5 history.');
+  const hdrOnly=totBad.filter(r=>r.hO&&!r.hB);
+  if(totBad.some(r=>r.hO))causes.push('Opportunity header totals ≠ sum of opportunity lines ('+totBad.filter(r=>r.hO).map(r=>r.label).join(', ')+'): the problem is on the opportunity side (roll-up/breakup calculation), not the booking sync.');
+  if(totBad.some(r=>r.hB&&!r.hO))causes.push('Opportunity header and lines agree but booking lines total differs ('+totBad.filter(r=>r.hB&&!r.hO).map(r=>r.label).join(', ')+'): booking lines stale or missing – refresh/correct booking lines.');
+  // bucket hint
+  const acv=totDiffs.find(r=>r.label==='ACV');
+  if(acv&&!acv.any&&totBad.length)causes.push('Total ACV ties but the New/Expansion / Subsumed / Renewal split differs → bucket (breakup) mismatch, not an amount mismatch.');
+  if(netDiffs.length)causes.push('Net ≠ Gross × (100 − rebate%): check the Distributor Fee booking line rebate %.');
+  if(splitDiffs.length)causes.push('Theatre/area/region/territory differ between opportunity and booking split: ETM changed after booking or the booking split was not synced.');
+  if(!D.O1.length)notes.push('O1 (opportunity header) not provided – header, totals and theatre checks skipped.');
+  if(!B1all.length)notes.push('B1 (booking header) not provided – header and freeze checks skipped.');
+  if(!OLI.length)notes.push('O2 (opportunity products) not provided – line checks skipped.');
+  if(!BLI.length)notes.push('B2 (booking lines) not provided – line/total checks skipped.');
+
+  const hmBad=hdrMet.filter(r=>r.st==='bad').length;
+  const bad=hdrDiffs.length||hmBad||lineDiffs.length||totBad.length||splitDiffs.length||netDiffs.length;
+  const where=[hdrDiffs.length?'header':'',hmBad?'header ACV/TCV':'',(lineDiffs.length)?'lines':'',totBad.length?'totals':'',splitDiffs.length?'theatre/split':'',netDiffs.length?'net/rebate':''].filter(Boolean);
+
+  // ---- DATA LOAD FILES (what to load to correct the booking so it matches the opportunity)
+  const loads={};const loadIds=new Set();
+  const loadLines=[];
+  pairsList.forEach(({b,o,factor})=>{
+    const upd={};
+    LINE_MAP.forEach(([of,bf])=>{
+      if(bf==='Total_Price__c')return; // order-item price: review manually
+      if(!has([o],of)||!has([b],bf))return;
+      const gross=!/PromoDisc|Trade_Up|Prepayment/.test(of);
+      let exp=num(o[of])*factor;if(gross)exp=r2(exp);
+      if(cmpN(exp,b[bf])==='bad')upd[bf]=exp;
+    });
+    NET_MAP.forEach(([g,n])=>{
+      if(!has([b],g)||!has([b],n))return;
+      const gv=(g in upd)?upd[g]:num(b[g]);
+      const exp=r2(gv*(100-rebate)/100);
+      if(cmpN(exp,b[n])==='bad')upd[n]=exp;
+    });
+    if(Object.keys(upd).length){loadLines.push({Id:b.Id,upd});loadIds.add(b.Id)}
+  });
+  if(loadLines.length)loads['Booking_Line_Item__c']=loadLines;
+  const hb=hdrAll.filter(x=>x.st==='bad');
+  if(B1&&hb.length){const upd={};hb.forEach(x=>{upd[x.bf]=x.opp});loads['Booking__c']=[{Id:B1.Id,upd}];loadIds.add(B1.Id)}
+  {const hm=hdrMet.filter(r=>r.st==='bad'&&/^Booking header field/.test(r.src)&&r.opp!==null);
+   if(B1&&hm.length){const upd=(loads['Booking__c']&&loads['Booking__c'][0].upd)||{};hm.forEach(r=>{upd[r.bf]=r2(r.opp)});loads['Booking__c']=[{Id:B1.Id,upd}];loadIds.add(B1.Id);
+     notes.push('Header ACV/TCV data load: '+hm.length+' booking header field(s) included in the Booking__c file ('+hm.map(r=>r.bf).join(', ')+'). If Data Loader rejects them as read-only (roll-up/formula fields), correct the booking lines instead – the header recalculates from them.')}}
+  const sgrp={};splitAll.filter(x=>x.st==='bad').forEach(x=>{(sgrp[x.split]=sgrp[x.split]||{})[x.bf]=x.opp});
+  const sl=Object.keys(sgrp).map(id=>({Id:id,upd:sgrp[id]}));
+  if(sl.length){loads['Booking_Split__c']=sl;sl.forEach(x=>loadIds.add(x.Id))}
+  const ran=[];
+  if(D.O1.length&&B1all.length)ran.push('header');
+  if(hdrMet.length)ran.push('header ACV/TCV');
+  if(OLI.length&&BLI.length)ran.push('lines');
+  if(totDiffs.length)ran.push('totals');
+  if(D.O1.length&&SPL.length)ran.push('theatre');
+  return {verdict:bad?'bad':'ok',ran,
+    title:bad?'Mismatch found in: '+where.join(', '):'No mismatch in the checks run ('+(ran.join(', ')||'none')+')',
+    status,frozen,hdrMet,hdrDiffs,lineDiffs,netDiffs,totDiffs,totBad,splitDiffs,causes,extra,notes,timing,B1,O1,hdrAll,lineAll,splitAll,loads,loadIds,bliById:Object.fromEntries(BLI.map(x=>[x.Id,x])),
+    matched:{hdr:hdrAll.filter(x=>x.st!=='bad').length,hdrTotal:hdrAll.length,lines:bliRev.length}};
+}
+
+/* ---------- RENDER ---------- */
+function tbl(cols,rows,cls){
+  if(!rows.length)return '<div class="muted">None</div>';
+  return '<table><thead><tr>'+cols.map(c=>'<th>'+c[1]+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+cols.map(c=>'<td class="'+(c[2]||'')+'">'+esc(r[c[0]])+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+}
+function render(R){
+  const out=document.getElementById('cout');
+  if(R.error){out.innerHTML='<div class="verdict v-warn">'+esc(R.error)+'</div>';return}
+  let h='<div class="verdict v-'+(R.verdict==='bad'?'bad':R.verdict==='ok'?'ok':'warn')+'">'+(R.verdict==='bad'?'✖ ':R.verdict==='ok'?'✔ ':'⚠ ')+esc(R.title)+'</div>';
+  if(R.hdrDiffs===undefined){ // no booking case
+    h+='<div class="card"><h3>Likely cause</h3><ul>'+R.causes.map(c=>'<li>'+esc(c)+'</li>').join('')+'</ul></div>';
+    out.innerHTML=h;return;
+  }
+  const L=R.loads||{};const lobj=Object.keys(L);
+  window._R=R;
+  h+=lobj.length
+    ?'<div class="card" style="border:2px solid #d9534f;background:#fff7f7"><h3 style="color:#a11d1d">⚠ Data load needed</h3><ul>'+lobj.map(o=>'<li><b>'+esc(o)+'</b> &ndash; '+L[o].length+' record(s) to update (files at the bottom of this page; affected items are tagged <span class="tag t-bad">DATA LOAD</span>)</li>').join('')+'</ul></div>'
+    :'<div class="card" style="border:2px solid #b7e2c4;background:#f3fbf5"><h3 style="color:#146c2e;margin:0">✔ Data load not needed</h3><div class="muted">No record needs to be updated for the checks that were run.</div></div>';
+  h+=XL_BTN('c');
+  if(R.B1)h+='<div class="card"><h3>Booking status</h3><div>Field Update Status: <b>'+(R.status?esc(R.status):'(blank – syncing)')+'</b> '+(R.frozen?'<span class="tag t-warn">frozen – header sync stopped</span>':'<span class="tag t-ok">sync active</span>')+'</div>'+(R.timing?'<div class="muted" style="margin-top:4px">'+esc(R.timing)+'</div>':'')+'</div>';
+  if(R.causes.length)h+='<div class="card"><h3>Likely cause</h3><ul>'+R.causes.map(c=>'<li>'+esc(c)+'</li>').join('')+'</ul>'+(R.extra.length?'<div class="hint"><b>To confirm:</b> '+R.extra.map(esc).join(' ')+'</div>':'')+'</div>';
+  const ran=R.ran||[];
+  window._R=R;
+  // what does not match (summary)
+  const mm=[];
+  R.hdrDiffs.forEach(d=>mm.push('<b>Header</b> – '+esc(d.field)+': Opportunity <b>'+esc(d.opp||'(blank)')+'</b> vs Booking <b>'+esc(d.bkg||'(blank)')+'</b>'));
+  (R.hdrMet||[]).filter(r=>r.st==='bad').forEach(r=>mm.push('<b>Header ACV/TCV</b> – '+esc(r.label)+': Opportunity <b>'+fmt(r.opp)+'</b> vs Booking <b>'+fmt(r.bkg)+'</b> (diff '+fmt(r.bkg-r.opp)+')'));
+  R.lineAll.filter(r=>r.st==='bad').forEach(d=>mm.push('<b>Line '+esc(d.line)+'</b> <span class="idc">Opp line '+esc(d.oli)+'</span> <span class="idc">Booking line '+esc(d.bli)+'</span> – '+esc(d.of)+(d.bf&&d.bf!=='—'?' → '+esc(d.bf):'')+': Opportunity '+esc(d.opp)+' vs Booking '+esc(d.bkg)+(d.diff?' (diff '+esc(d.diff)+')':'')));
+  R.netDiffs.forEach(d=>mm.push('<b>Net '+esc(d.line)+'</b> – '+esc(d.field)+': expected '+esc(d.opp)+' vs Booking '+esc(d.bkg)));
+  R.totBad.forEach(r=>mm.push('<b>Total '+esc(r.label)+'</b> – header '+fmt(r.hdr)+', Σ opp lines '+(r.sumO===null?'—':fmt(r.sumO))+', Σ booking lines '+(r.sumB===null?'—':fmt(r.sumB))));
+  R.splitDiffs.forEach(d=>mm.push('<b>Territory</b> <span class="idc">split '+esc(d.split||'')+'</span> – '+esc(d.field)+': Opportunity <b>'+esc(d.opp||'(blank)')+'</b> vs Booking <b>'+esc(d.bkg||'(blank)')+'</b>'));
+  h+='<div class="card" style="border-color:'+(mm.length?'#f4bcbc':'#b7e2c4')+'"><h3>'+(mm.length?'What does not match ('+mm.length+')':'Everything compared matches')+'</h3>'+(mm.length?'<ul>'+mm.map(m=>'<li>'+m+'</li>').join('')+'</ul>':'')+'</div>';
+  const only=!!window._only;
+  h+='<div class="row" style="margin:0 0 10px"><label style="cursor:pointer"><input type="checkbox" id="onlyBad" '+(only?'checked':'')+' onchange="window._only=this.checked;render(window._R)"> Show only mismatches in the side-by-side tables</label></div>';
+  const stTag=s=>s==='ok'?'<span class="tag t-ok">✔ Match</span>':s==='bad'?'<span class="tag t-bad">✖ Mismatch</span>':'<span class="tag t-warn">Blank on opp – not synced</span>';
+  const sbs=(cols,rows)=>{rows=only?rows.filter(r=>r.st==='bad'):rows;if(!rows.length)return '<div class="muted">'+(only?'No mismatches':'No data')+'</div>';return '<table><thead><tr>'+cols.map(c=>'<th>'+c[1]+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr class="r-'+r.st+'">'+cols.map(c=>'<td class="'+(c[2]||'')+(r.st==='bad'&&c[3]?' diff':'')+'">'+(c[0]==='st'?stTag(r.st):esc(r[c[0]]))+'</td>').join('')+'</tr>').join('')+'</tbody></table>'};
+  if(ran.includes('header'))h+='<div class="card"><h3>Header – Opportunity vs Booking <span class="muted">('+R.matched.hdr+' of '+R.matched.hdrTotal+' fields match)</span></h3><div style="margin-bottom:8px"><span class="idc">Opportunity: '+esc(R.O1.Id||'—')+'</span> <span class="idc">Booking: '+esc(R.B1?R.B1.Id:'—')+'</span> '+((R.B1&&R.loadIds.has(R.B1.Id))?'<span class="tag t-bad">DATA LOAD</span>':'')+'</div>'+sbs([['of','Opportunity field'],['opp','Opportunity value','',1],['bkg','Booking value','',1],['bf','Booking field'],['st','Status']],R.hdrAll)+'</div>';
+  if(R.hdrMet&&R.hdrMet.length){
+    const HM=R.hdrMet,nbad=HM.filter(r=>r.st==='bad').length,nrnd=HM.filter(r=>r.rnd).length;
+    const mcell=r=>{if(!r)return only?'':'<div class="mc none"><div class="ml"></div><div class="mv">—</div><div class="mv">—</div><div class="mi"></div></div>';
+      if(only&&r.st!=='bad')return '';
+      return '<div class="mc r-'+(r.st==='info'?'none':r.st)+'" title="'+esc(r.src)+'"><div class="ml">'+esc(r.label)+'</div><div class="mv">'+(r.opp===null?'—':fmt(r.opp))+'</div><div class="mv">'+fmt(r.bkg)+'</div><div class="mi">'+(r.rnd?'≈':r.st==='ok'?'✔':r.st==='bad'?'✖':'')+'</div></div>'};
+    let hb='';
+    [...new Set(HM.map(r=>r.sec))].forEach(sec=>{
+      const rs=HM.filter(r=>r.sec===sec);let cells='';
+      [...new Set(rs.map(r=>r.row))].sort((a,b)=>a-b).forEach(row=>{cells+=mcell(rs.find(r=>r.row===row&&r.col===0))+mcell(rs.find(r=>r.row===row&&r.col===1))});
+      if(cells)hb+='<details class="sec" open><summary class="sech">'+sec+'</summary><div class="mh2"><span></span><span>Opportunity</span><span>Booking</span><span></span><span></span><span>Opportunity (expected)</span><span>Booking</span><span></span></div><div class="mgrid">'+cells+'</div></details>';
+    });
+    h+='<div class="card"><h3>Header – ACV / TCV Metrics <span class="muted">(Opportunity vs Booking · Gross left, Net right)</span> '+(nbad?'<span class="tag t-bad">'+nbad+' mismatch'+(nbad>1?'es':'')+'</span>':'<span class="tag t-ok">all match</span>')+(nrnd?' <span class="tag t-warn">'+nrnd+' ≈ rounding only</span>':'')+'</h3>'
+      +(hb||'<div class="muted">No mismatches</div>')
+      +'<div class="hint">Booking value = the booking header field when it was queried, otherwise the sum of its booking lines (hover a value to see which). Fields with no opportunity-header equivalent (Trade-up, Prepayment, Promo, Rx) are shown for the booking only. The opportunity has no net values, so expected net = opportunity gross × (100 − rebate%) ÷ 100. Booking header totals are roll-ups of the lines – fix the opportunity line / booking line, not the header.</div></div>';
+  }
+  if(ran.includes('lines')){
+    // one compact collapsible block per product line: IDs in the header, fields side by side inside
+    const groups={};const order=[];
+    R.lineAll.forEach(r=>{const k=r.line+'|'+r.oli+'|'+r.bli;if(!groups[k]){groups[k]={line:r.line,oli:r.oli,bli:r.bli,rows:[]};order.push(k)}groups[k].rows.push(r)});
+    h+='<div class="card"><h3>Lines – Opportunity line vs Booking line <span class="muted">('+order.length+' line pair(s); opportunity value = opp line × quantity factor)</span></h3>';
+    const SECTIONS=[
+     ['TCV Metrics',[[['Gross TCV Total','Total_Price__c'],['Net TCV Total','Net_TCV_Amount__c']],
+       [['Gross New/Expansion TCV','New_Expansion_TCV__c'],['Net New/Expansion TCV','Net_New_Expansion_TCV__c']],
+       [['Gross Renewal Subsumed TCV','Subsumed_Renewal_TCV__c'],['Net Renewal Subsumed TCV','Net_Subsumed_Renewal_TCV__c']],
+       [['Trade-up Credit TCV','Oppty_Trade_Up_Discount__c'],['Promo Discount TCV','PromoDiscTCV__c']],
+       [['Prepayment Credit TCV','Prepayment_Credit__c'],['Net Renewal TCV','Net_Renewal_TCV__c']],
+       [['Gross Renewal TCV','Gross_Renewal_TCV__c'],null]]],
+     ['ACV Metrics',[[['Gross ACV Total','Gross_ACV_Amount__c'],['Net ACV Total','Net_ACV_Amount__c']],
+       [['Gross New/Expansion ACV','Gross_New_Expansion_ACV__c'],['Net New/Expansion ACV','Net_New_Expansion_ACV__c']],
+       [['Gross Renewal Subsumed ACV','Gross_Subsumed_Renewal_ACV__c'],['Net Renewal Subsumed ACV','Net_Subsumed_Renewal_ACV__c']],
+       [['Gross Renewal ACV','Gross_Renewal_ACV__c'],['Net Renewal ACV','Net_Renewal_ACV__c']],
+       [['Rx New/Expansion ACV','Rx_New_Expansion_ACV__c'],null]]],
+     ['Product Details',[[['Product Code','Product_Code__c'],['Product Family','Product_Family__c']],
+       [['Product Category','Product_Category__c'],['License Type','License_Type__c']],
+       [['Payment Option','Product_Payment_Option__c'],['Subscription Term','Subscription_Term__c']],
+       [['Total Discount','Total_Discount__c'],null]]]
+    ];
+    const cellHtml=(def,g)=>{
+      if(!def)return only?'':'<div class="mc none"></div>';
+      const [label,key]=def;
+      const r=g.byBf[key];const bk=(R.bliById||{})[g.bli]||{};
+      let o='—',bv='—',st='none';
+      if(r){o=r.opp;bv=r.bkg;st=r.st}
+      else if(bk[key]!==undefined&&bk[key]!==''){bv=(/Code|Family|Category|License|Payment/.test(key))?bk[key]:fmt(num(bk[key]))}
+      else return only?'':'<div class="mc none"><div class="ml">'+esc(label)+'</div><div class="mv">—</div><div class="mv">—</div><div class="mi"></div></div>';
+      if(only&&st!=='bad')return '';
+      return '<div class="mc r-'+st+'"><div class="ml">'+esc(label)+'</div><div class="mv">'+esc(o)+'</div><div class="mv">'+esc(bv)+'</div><div class="mi" title="'+(r&&r.rnd?'Rounding only (diff '+esc(r.diff)+')':'')+'">'+(r&&r.rnd?'≈':st==='ok'?'✔':st==='bad'?'✖':'')+'</div></div>';
+    };
+    order.forEach(k=>{
+      const g=groups[k];g.byBf={};g.rows.forEach(r=>{if(!g.byBf[r.bf])g.byBf[r.bf]=r});
+      const nb=g.rows.filter(r=>r.st==='bad').length;
+      if(only&&!nb)return;
+      const covered=new Set();
+      let body='';
+      SECTIONS.forEach(([title,pairs])=>{
+        let cells='';
+        pairs.forEach(pr=>pr.forEach(def=>{if(def)covered.add(def[1]);cells+=cellHtml(def,g)}));
+        if(!cells)return;
+        body+='<details class="sec" open><summary class="sech">'+title+'</summary><div class="mh2"><span></span><span>Opportunity</span><span>Booking</span><span></span><span></span><span>Opportunity</span><span>Booking</span><span></span></div><div class="mgrid">'+cells+'</div></details>';
+      });
+      const rest=g.rows.filter(r=>!covered.has(r.bf)&&(!only||r.st==='bad'));
+      if(rest.length)body+='<details class="sec" open><summary class="sech">Other fields</summary><div class="mgrid">'+rest.map(r=>'<div class="mc r-'+r.st+'"><div class="ml">'+esc(r.of)+(r.bf&&r.bf!=='—'?' → '+esc(r.bf):'')+'</div><div class="mv">'+esc(r.opp)+'</div><div class="mv">'+esc(r.bkg)+'</div><div class="mi">'+(r.st==='ok'?'✔':'✖')+'</div></div>').join('')+'</div></details>';
+      h+='<details class="lg" '+(nb?'open':'')+'><summary><b>'+esc(g.line)+'</b> <span class="idc">Opp line: '+esc(g.oli)+'</span> <span class="idc">Booking line: '+esc(g.bli)+'</span> '+(nb?'<span class="tag t-bad">'+nb+' mismatch'+(nb>1?'es':'')+'</span>':'<span class="tag t-ok">all '+g.rows.length+' match</span>')+(R.loadIds.has(g.bli)?' <span class="tag t-bad">DATA LOAD</span>':'')+'</summary>'+body+'</details>';
+    });
+    h+='</div>';
+  }
+  if(R.splitAll.length){
+    const LBL={Split_percentage__c:'Split % (Opportunity_Split__c)',OwnerId:'Sales Rep (opp owner)',ETM_Theatre__c:'Theatre',ETM_Area__c:'Area',ETM_Region__c:'Region',ETM_Territory__c:'Territory',Opp_PLS_ETM_Theatre__c:'PLS Theatre',Opp_PLS_ETM_Area__c:'PLS Area',Opp_PLS_ETM_Region__c:'PLS Region',Opp_PLS_ETM_Territory__c:'PLS Territory',Opp_PLS_NCD_ETM_Theatre__c:'PLS NCD Theatre',Opp_PLS_NCD_ETM_Area__c:'PLS NCD Area',Opp_PLS_NCD_ETM_Region__c:'PLS NCD Region',Opp_PLS_NCD_ETM_Territory__c:'PLS NCD Territory',Opp_PLS_SaaS_ETM_Theatre__c:'PLS SaaS Theatre',Opp_PLS_SaaS_ETM_Area__c:'PLS SaaS Area',Opp_PLS_SaaS_ETM_Region__c:'PLS SaaS Region',Opp_PLS_SaaS_ETM_Territory__c:'PLS SaaS Territory'};
+    const sg={},so=[];R.splitAll.forEach(r=>{if(!sg[r.split]){sg[r.split]=[];so.push(r.split)}sg[r.split].push(r)});
+    h+='<div class="card"><h3>Territory (ETM) – Opportunity vs Booking split <span class="muted">('+so.length+' booking split record(s))</span></h3>';
+    so.forEach(id=>{
+      const rows=sg[id],nb=rows.filter(r=>r.st==='bad').length;
+      const vis=(only?rows.filter(r=>r.st==='bad'):rows).filter(r=>!(r.opp===''&&r.bkg===''&&!only));
+      if(only&&!nb)return;
+      h+='<details class="lg" '+(nb?'open':'')+'><summary><b>Booking split</b> <span class="idc">'+esc(id)+'</span> '+(R.loadIds.has(id)?'<span class="tag t-bad">DATA LOAD</span> ':'')+(nb?'<span class="tag t-bad">'+nb+' mismatch'+(nb>1?'es':'')+'</span>':'<span class="tag t-ok">all match</span>')+'</summary><div class="mh2"><span></span><span>Opportunity</span><span>Booking</span><span></span><span></span><span></span><span></span><span></span></div><div class="mgrid">'
+        +vis.map(r=>'<div class="mc r-'+r.st+'"><div class="ml">'+esc(LBL[r.of]||r.of)+'</div><div class="mv">'+esc(r.opp||'—')+'</div><div class="mv">'+esc(r.bkg||'—')+'</div><div class="mi">'+(r.st==='ok'?'✔':'✖')+'</div></div>').join('')+'</div></details>';
+    });
+    h+='<div class="hint">Opportunity ETM values are compared with each booking split record. If the opportunity has multiple splits, a split record may legitimately carry a different rep\'s territory.</div></div>';
+  }
+  // totals
+  let tt='<table><thead><tr><th>Bucket</th><th>Opp header</th><th>Σ Opp lines</th><th>Σ Booking lines</th><th>Status</th></tr></thead><tbody>';
+  R.totDiffs.forEach(r=>{tt+='<tr class="'+(r.any?'r-bad':'')+'"><td>'+esc(r.label)+'</td><td class="num">'+fmt(r.hdr)+'</td><td class="num">'+(r.sumO===null?'—':fmt(r.sumO))+'</td><td class="num">'+(r.sumB===null?'—':fmt(r.sumB))+'</td><td>'+(r.any?'<span class="tag t-bad">'+(r.hO?'header≠opp lines':'')+(r.hO&&r.hB?' · ':'')+(r.hB?'header≠booking':'')+(!r.hO&&!r.hB&&r.oB?'opp lines≠booking':'')+'</span>':'<span class="tag t-ok">ties</span>')+'</td></tr>'});
+  tt+='</tbody></table>';
+  if(R.totDiffs.length)h+='<div class="card"><h3>Totals: opportunity header vs lines vs booking</h3>'+tt+'</div>';
+  if(lobj.length){
+    h+='<div class="card"><h3>Data Loader files</h3><div class="hint" style="margin:0 0 8px">Update operation. Values come from the opportunity (header / split fields) or from opportunity line × quantity factor, with Net recalculated from the rebate % (Distributor Fee line). Back up current values before loading.</div>';
+    window._csvs={};
+    lobj.forEach(o=>{
+      const cols=[];L[o].forEach(r=>Object.keys(r.upd).forEach(c=>{if(!cols.includes(c))cols.push(c)}));
+      const csv=[['Id'].concat(cols).join(',')].concat(L[o].map(r=>[r.Id].concat(cols.map(c=>{const v=r.upd[c];if(v===undefined||v==='')return '';const t=(typeof v==='number')?v.toFixed(2):String(v);return /[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t})).join(','))).join('\n');
+      window._csvs[o]=csv;
+      h+='<div style="margin:10px 0 4px"><b>'+esc(o)+'</b> <span class="muted">('+L[o].length+' record(s), '+cols.length+' field(s))</span></div><div class="row"><button class="btn sm" onclick="dlCsv(\''+o+'\')">Download '+o+'.csv</button><button class="btn sm sec" onclick="copyText(window._csvs[\''+o+'\'])">Copy</button></div><textarea readonly style="margin-top:6px;min-height:70px">'+esc(csv)+'</textarea>';
+    });
+    h+='<div class="hint"><b>Before loading:</b> booking line / booking edits are blocked for most users – run as an IT ProdOps / API user. '+(R.frozen?'<b>This booking is frozen ('+esc(R.status)+')</b> – header values will not sync on their own, so the load is the fix; get the usual recon approval. ':'')+'Total price, product attributes and amounts not tied to the opportunity line are not generated – review those manually.</div></div>';
+  }
+  if(R.notes.length)h+='<div class="card"><h3>Notes</h3><ul>'+R.notes.map(n=>'<li>'+esc(n)+'</li>').join('')+'</ul><div class="hint">Differences ≤ 0.01 are treated as rounding; blank amounts as 0. Root causes are indicators, confirm with the suggested queries.</div></div>';
+  out.innerHTML=h;
+}
+
+
+/* ---------- REBATE CALCULATOR ---------- */
+const RB_PAIRS=[
+ ['Total_Price__c','Net_TCV_Amount__c','Net TCV Amount'],
+ ['New_Expansion_TCV__c','Net_New_Expansion_TCV__c','Net New/Expansion TCV'],
+ ['Subsumed_Renewal_TCV__c','Net_Subsumed_Renewal_TCV__c','Net Renewal Subsumed TCV'],
+ ['Gross_Renewal_TCV__c','Net_Renewal_TCV__c','Net Renewal TCV'],
+ ['Gross_ACV_Amount__c','Net_ACV_Amount__c','Net ACV Amount'],
+ ['Gross_New_Expansion_ACV__c','Net_New_Expansion_ACV__c','Net New/Expansion ACV'],
+ ['Gross_Subsumed_Renewal_ACV__c','Net_Subsumed_Renewal_ACV__c','Net Renewal Subsumed ACV'],
+ ['Gross_Renewal_ACV__c','Net_Renewal_ACV__c','Net Renewal ACV']
+];
+const RB_SQL=`SELECT Id, Booking__c, Type__c, Product_Code__c, Rebate__c, Impacts_Gross_Bookings__c, Impacts_Net_Bookings__c,
+       Total_Price__c, Net_TCV_Amount__c,
+       New_Expansion_TCV__c, Net_New_Expansion_TCV__c,
+       Subsumed_Renewal_TCV__c, Net_Subsumed_Renewal_TCV__c,
+       Gross_Renewal_TCV__c, Net_Renewal_TCV__c,
+       Gross_ACV_Amount__c, Net_ACV_Amount__c,
+       Gross_New_Expansion_ACV__c, Net_New_Expansion_ACV__c,
+       Gross_Subsumed_Renewal_ACV__c, Net_Subsumed_Renewal_ACV__c,
+       Gross_Renewal_ACV__c, Net_Renewal_ACV__c
+FROM Booking_Line_Item__c WHERE <FILTER>`;
+function rbHalfUp(x){const sgn=x<0?-1:1;return sgn*Math.round(Math.abs(x)*100+1e-9)/100}
+function rbQuery(){
+  const id=document.getElementById('rid').value.trim().replace(/['"]/g,'');
+  if(!id){document.getElementById('rq').innerHTML='';return}
+  const f=/^006/.test(id)?`Booking__r.Opportunity__c = '${id}'`:`Booking__c = '${id}'`;
+  window._rbq=RB_SQL.replace('<FILTER>',f);
+  const oq=/^006/.test(id)?`Id = '${id}'`:`Id IN (SELECT Opportunity__c FROM Booking__c WHERE Id = '${id}')`;
+  window._rbo=`SELECT Id, Name, CloseDate, Opportunity_Type__c, Opportunity_Sub_Type__c, Deal_Registration_Type__c,
+       Distributor_Lookup__c, Distributor_Lookup__r.Name, Partner_Lookup__c, Partner_Lookup__r.Name
+FROM Opportunity WHERE ${oq}`;
+  document.getElementById('rq').innerHTML='<div class="qhead" style="margin-top:10px"><div class="qtitle">Opportunity &amp; distributor (run this first)</div><button class="btn sm" onclick="copyText(window._rbo)">Copy</button></div><pre>'+esc(window._rbo)+'</pre>';
+  document.getElementById('rq3').innerHTML='<div class="qhead"><div class="qtitle">Booking line items query</div><button class="btn sm" onclick="copyText(window._rbq)">Copy</button></div><pre>'+esc(window._rbq)+'</pre>';
+}
+function rbTableQuery(){
+  const A=parseDelim(document.getElementById('rA').value);
+  const el=document.getElementById('rq2');
+  if(!A.length){el.innerHTML='<div class="verdict v-warn">Paste the opportunity &amp; distributor result first.</div>';return}
+  const d=A[0]['Distributor_Lookup__c']||'',p=A[0]['Partner_Lookup__c']||'';
+  const ids=[d,p].filter(Boolean).map(x=>"'"+x+"'");
+  if(!ids.length){el.innerHTML='<div class="verdict v-warn">No Distributor or Partner on the opportunity – no Distributor Fee rebate should apply (expected 0%).</div>';return}
+  window._rbt=`SELECT Id, Name, Distributor__c, Distributor__r.Name, Rebate_Type__c, Rebate_Deal_Type__c, Rebate__c, ASPEN_Rebate__c,
+       Value_Add_Distribution_fee__c, Distributor_Installation_Fee__c, Start_Date__c, End_Date__c
+FROM Rebate_Table__c WHERE Distributor__c IN (${ids.join(', ')}) ORDER BY Distributor__c, Start_Date__c`;
+  el.innerHTML='<div class="qhead" style="margin-top:10px"><div class="qtitle">Rebate Table (distributor '+esc(A[0]['Distributor_Lookup__r.Name']||d||'—')+')</div><button class="btn sm" onclick="copyText(window._rbt)">Copy</button></div><pre>'+esc(window._rbt)+'</pre>';
+}
+function rbVerify(rows){
+  const A=parseDelim(document.getElementById('rA').value),T=parseDelim(document.getElementById('rT').value);
+  if(!A.length||!T.length)return null;
+  const o=A[0],dist=o['Distributor_Lookup__c']||'';
+  const dtIn=document.getElementById('rdt').value.trim();
+  const ref=dtIn||o['CloseDate']||'';const rt=Date.parse(ref);
+  const dealType=(document.getElementById('rmsp').value.trim()||o['Opportunity_Sub_Type__c']||'(blank)');
+  const dt=s=>{const t=Date.parse(s);return isNaN(t)?null:t};
+  const fees=T.filter(r=>(r['Rebate_Type__c']||'')==='Distributor Fee'&&(r['Distributor__c']||'')===dist);
+  const cands=fees.filter(r=>{
+    const st=dt(r['Start_Date__c']),en=dt(r['End_Date__c']);
+    const inWin=(st===null||(!isNaN(rt)&&st<=rt))&&(en===null||(!isNaN(rt)&&rt<=en));
+    const dty=r['Rebate_Deal_Type__c']||'All';
+    const okDeal=dty==='All'||dty===''||(dty==='All except MSP'?dealType!=='MSP':dty===dealType);
+    return inWin&&okDeal;
+  });
+  const feeLines=rows.filter(r=>(r['Type__c']||'')==='Distributor Fee');
+  const applied=[...new Set(feeLines.filter(r=>(r['Rebate__c']||'')!=='').map(r=>num(r['Rebate__c'])))];
+  const vals=[...new Set(cands.map(c=>num(c['Rebate__c'])))];
+  let expected=null,status='ok',msg='';
+  if(!dist){expected=0;msg='The opportunity has no Distributor, so no Distributor Fee rebate is expected (0%).'}
+  else if(!cands.length){expected=0;msg='No Rebate Table entry for '+(o['Distributor_Lookup__r.Name']||'this distributor')+' is active on '+(ref||'the reference date')+' for Deal Type "'+dealType+'" – no rebate is expected (0%). Entries that exist for this distributor: '+(fees.length?fees.map(c=>c.Name+' ['+(c.Rebate_Deal_Type__c||'All')+', '+num(c.Rebate__c)+'%, from '+(c.Start_Date__c||'…')+(c.End_Date__c?' to '+c.End_Date__c:'')+']').join('; '):'none')+'.'}
+  else if(vals.length===1){expected=vals[0];msg='Rebate Table entry '+cands.map(c=>c.Name).join(', ')+' ('+(cands[0]['Distributor__r.Name']||'distributor')+') applies: '+expected+'%.'}
+  else{msg='Several Rebate Table entries with different % are active ('+cands.map(c=>c.Name+' = '+num(c['Rebate__c'])+'%').join(', ')+') – confirm which deal type applies.';status='warn'}
+  const appliedTxt=applied.length?applied.map(x=>x+'%').join(', '):'none (no Distributor Fee line / Rebate % blank)';
+  if(expected!==null){
+    const a=applied.length?applied:[0];
+    if(!a.every(x=>Math.abs(x-expected)<0.0001))status='bad';
+  }else if(status==='warn'&&applied.length&&applied.every(x=>vals.some(v=>Math.abs(v-x)<0.0001)))status='ok-multi';
+  const aspen=cands.filter(c=>(c['ASPEN_Rebate__c']||'')!=='').map(c=>c.Name+': ASPEN Rebate % = '+num(c['ASPEN_Rebate__c'])+'%');
+  const fixIds=feeLines.map(r=>r.Id);
+  return {status,expected,applied,appliedTxt,msg,ref,dealType,dist,distName:o['Distributor_Lookup__r.Name']||'',cands,aspen,fixIds,useExpected:(status==='bad'&&expected!==null)?expected:null};
+}
+function rbLookup(){
+  const out=document.getElementById('rchkout');
+  const v=rbVerify([]);
+  if(!v){out.innerHTML='<div class="verdict v-warn">Paste both results first: (2a) Opportunity &amp; distributor and (2b) Rebate Table.</div>';return}
+  out.innerHTML='<div class="card" style="border:2px solid #b8c4e0;background:#f5f8ff"><h3 style="margin:0 0 6px">Expected rebate: <span style="font-size:22px">'+(v.expected===null?'confirm':v.expected+'%')+'</span></h3><div>Distributor: <b>'+esc(v.distName||v.dist||'—')+'</b> · Deal type: <b>'+esc(v.dealType)+'</b> · Reference date: <b>'+esc(v.ref||'—')+'</b></div><div style="margin-top:6px">'+esc(v.msg)+'</div>'+(v.cands.length?'<div class="muted" style="margin-top:6px">Matching entries: '+v.cands.map(c=>esc(c.Name)+' ('+esc(c.Rebate_Deal_Type__c||'All')+', '+num(c.Rebate__c)+'%, '+esc(c.Start_Date__c||'…')+' → '+esc(c.End_Date__c||'open')+')').join('; ')+'</div>':'')+'<div class="hint">Next: run Step 3 – it compares this with the rebate actually applied on the booking\'s Distributor Fee line.</div></div>';
+}
+function rbVerifyHtml(v){
+  if(!v)return '';
+  const bad=v.status==='bad',warn=v.status==='warn';
+  const col=bad?'#d9534f;background:#fff7f7':warn?'#e0a800;background:#fffbea':'#b7e2c4;background:#f3fbf5';
+  let h='<div class="card" style="border:2px solid '+col+'"><h3 style="margin:0 0 6px;color:'+(bad?'#a11d1d':warn?'#8a6100':'#146c2e')+'">'+(bad?'✖ Rebate % applied is NOT as per the Rebate Table':warn?'⚠ Rebate % needs confirmation':'✔ Rebate % applied is as per the Rebate Table')+'</h3>'
+   +'<table><thead><tr><th>Distributor</th><th>Deal type</th><th>Reference date</th><th class="num">Applied rebate</th><th class="num">Expected rebate</th></tr></thead><tbody><tr class="'+(bad?'r-bad':'')+'"><td>'+esc(v.distName||v.dist||'—')+'</td><td>'+esc(v.dealType)+'</td><td>'+esc(v.ref||'—')+'</td><td class="num">'+esc(v.appliedTxt)+'</td><td class="num"><b>'+(v.expected===null?'?':v.expected+'%')+'</b></td></tr></tbody></table>'
+   +'<div style="margin-top:8px">'+esc(v.msg)+'</div>';
+  if(bad)h+='<div style="margin-top:6px"><b>Correct rebate should be '+v.expected+'%</b> (applied: '+esc(v.appliedTxt)+'). The Distributor Fee line <code>Rebate__c</code>, its fee amounts and every Net value must be recalculated with the correct %.</div>';
+  if(v.cands.length)h+='<div class="muted" style="margin-top:6px">Matching Rebate Table entries: '+v.cands.map(c=>esc(c.Name)+' ('+esc(c.Rebate_Deal_Type__c||'All')+', '+num(c.Rebate__c)+'%, '+esc(c.Start_Date__c||'…')+' → '+esc(c.End_Date__c||'open')+')').join('; ')+'</div>';
+  if(v.aspen.length)h+='<div class="muted">'+esc(v.aspen.join('; '))+' (only relevant for ASPEN deals).</div>';
+  h+='<div class="hint">Rule used (from the Rebate Table): Rebate Type = Distributor Fee, Distributor = opportunity Distributor, the reference date (opportunity Close Date unless you override it) falls between Start and End date (blank End = open), and the Rebate Table Deal Type matches the opportunity <b>Sub-Type</b> (values seen: MSP, GC Offer, All, All except MSP). I could not see the Apex that stamps the %, so confirm the date basis once with the business.</div></div>';
+  return h;
+}
+function rbCalc(){
+  const out=document.getElementById('rout');
+  const rows=parseDelim(document.getElementById('rdata').value);
+  if(!rows.length){out.innerHTML='<div class="verdict v-warn">Paste the booking line items result first.</div>';return}
+  const ov=document.getElementById('rpct').value.trim();
+  let override=ov!==''?parseFloat(ov.replace('%','')):null;
+  const ver=rbVerify(rows);let ovSrc='manual override';
+  if(ver&&override===null&&ver.useExpected!==null&&document.getElementById('ruse').checked){override=ver.useExpected;ovSrc='Rebate Table % (applied % was wrong)'}
+  // rebate per booking from Distributor Fee line
+  const feeBy={};
+  rows.forEach(r=>{if((r['Type__c']||'')==='Distributor Fee'&&(r['Rebate__c']||'')!=='')feeBy[r['Booking__c']]=num(r['Rebate__c'])});
+  const lines=rows.filter(r=>(r['Type__c']||'Revenue')==='Revenue');
+  const skipped=rows.length-lines.length;
+  const notes=[];
+  const calc=[];let anyNoRebate=false;
+  lines.forEach(r=>{
+    let reb=override!==null&&!isNaN(override)?override:feeBy[r['Booking__c']];
+    if(reb===undefined){reb=0;anyNoRebate=true}
+    const items=RB_PAIRS.map(([g,n,label])=>{
+      if(!Object.prototype.hasOwnProperty.call(r,g)||!Object.prototype.hasOwnProperty.call(r,n))return null;
+      const gross=num(r[g]),cur=num(r[n]),exp=rbHalfUp(gross*(100-reb)*0.01);
+      const cc=cmpN(cur,exp);
+      return {g,n,label,gross,cur,exp,bad:cc==='bad',rnd:cc==='rnd'};
+    }).filter(Boolean);
+    calc.push({r,reb,items,bad:items.some(i=>i.bad)});
+  });
+  const bad=calc.filter(c=>c.bad);
+  const fixCols=RB_PAIRS.map(p=>p[1]).filter(n=>calc.length&&Object.prototype.hasOwnProperty.call(calc[0].r,n));
+  const csvRows=[['Id'].concat(fixCols)];
+  bad.forEach(c=>{const m={};c.items.forEach(i=>m[i.n]=i.exp);csvRows.push([c.r.Id].concat(fixCols.map(n=>m[n]===undefined?'':m[n].toFixed(2))))});
+  const csv=csvRows.map(a=>a.join(',')).join('\n');
+  window._rbcsv=csv;
+  // Distributor Fee line fix when the applied Rebate % is wrong (Rebate__c + fee amounts scaled to the correct %)
+  let feeCsv='',feeNote='',feeCount=0,feeOut=null;
+  if(ver&&ver.status==='bad'&&ver.expected!==null){
+    const feeRows=rows.filter(r=>(r['Type__c']||'')==='Distributor Fee');
+    if(!feeRows.length)feeNote='No Distributor Fee line exists on this booking, so there is nothing to update by file – the fee line has to be created with Rebate % '+ver.expected+'%.';
+    else{
+      const FCOLS=['Total_Price__c','Net_TCV_Amount__c','New_Expansion_TCV__c','Net_New_Expansion_TCV__c','Subsumed_Renewal_TCV__c','Net_Subsumed_Renewal_TCV__c','Gross_Renewal_TCV__c','Net_Renewal_TCV__c','Gross_ACV_Amount__c','Net_ACV_Amount__c','Gross_New_Expansion_ACV__c','Net_New_Expansion_ACV__c','Gross_Subsumed_Renewal_ACV__c','Net_Subsumed_Renewal_ACV__c','Gross_Renewal_ACV__c','Net_Renewal_ACV__c'].filter(c=>Object.prototype.hasOwnProperty.call(feeRows[0],c));
+      const out=[['Id','Rebate__c'].concat(FCOLS)];
+      feeRows.forEach(r=>{const ap=num(r['Rebate__c']);const sc=ap?ver.expected/ap:null;
+        out.push([r.Id,String(ver.expected)].concat(FCOLS.map(c=>sc===null||(r[c]||'')===''?'':rbHalfUp(num(r[c])*sc).toFixed(2))));feeCount++});
+      feeOut=out;feeCsv=out.map(a=>a.join(',')).join('\n');
+      if(feeRows.some(r=>!num(r['Rebate__c'])))feeNote='The fee line has no applied rebate, so its amounts could not be scaled – only Rebate__c is filled; review the fee amounts manually.';
+    }
+  }
+  window._rbcsv2=feeCsv;
+  const needLoad=bad.length>0||!!feeCsv||!!feeNote;
+  window._rbx=()=>{
+    const rowsX=[[{v:needLoad?'DATA LOAD NEEDED':'NO DATA LOAD NEEDED',s:needLoad?5:6},{v:'Rebate check & net values',s:7}],[]];
+    if(ver){const st=ver.status==='bad'?2:ver.status==='warn'?4:3;
+      rowsX.push(['Rebate % verification'].map(c=>({v:c,s:7})));
+      rowsX.push(['Distributor','Deal type (opp sub-type)','Reference date','Applied rebate','Expected rebate','Status'].map(c=>({v:c,s:1})));
+      rowsX.push([ver.distName||ver.dist||'',ver.dealType,ver.ref||'',ver.appliedTxt,ver.expected===null?'?':ver.expected+'%',{v:ver.status==='bad'?'MISMATCH – correct rebate is '+ver.expected+'%':ver.status==='warn'?'Needs confirmation':'Match',s:st}]);
+      rowsX.push([ver.msg]);rowsX.push([]);}
+    rowsX.push([{v:'Net values by revenue line',s:7}]);
+    rowsX.push(['Booking line Id','Product','Rebate % used','Field','Gross','Expected net','Current net','Diff','Status','Data load?'].map(c=>({v:c,s:1})));
+    calc.forEach(c=>c.items.forEach(i=>{const x=i.bad?{t:'MISMATCH',s:2}:i.rnd?{t:'Rounding only (±0.01)',s:4}:{t:'Match',s:3};
+      rowsX.push([c.r.Id,c.r['Product_Code__c']||'',c.reb+'%',i.label,Math.round(i.gross*100)/100,Math.round(i.exp*100)/100,i.bad?{v:Math.round(i.cur*100)/100,s:2}:Math.round(i.cur*100)/100,(i.bad||i.rnd)?Math.round((i.cur-i.exp)*100)/100:'',{v:x.t,s:x.s},{v:c.bad?'YES':'no',s:c.bad?2:3}])}));
+    const lm={},lb={};
+    if(bad.length){lm['BLI Net values']=bad.map(c=>{const u={};c.items.forEach(i=>u[i.n]=i.exp);return {Id:c.r.Id,upd:u}});lb['BLI Net values']='Booking_Line_Item__c (net values)'}
+    if(feeOut){const hd=feeOut[0];lm['BLI Fee line']=feeOut.slice(1).map(r=>{const u={};hd.slice(1).forEach((h,k)=>{if(r[k+1]!=='')u[h]=h==='Rebate__c'?num(r[k+1]):num(r[k+1])});return {Id:r[0],upd:u}});lb['BLI Fee line']='Booking_Line_Item__c (Distributor Fee line: rebate % and amounts)'}
+    return [{name:'Rebate check',rows:rowsX}].concat(xlLoadSheets(lm,lb)).concat(feeNote?[{name:'Note',rows:[[feeNote]]}]:[]);
+  };
+  const rebs=[...new Set(calc.map(c=>c.reb))];
+  let h=rbVerifyHtml(ver)+'<div class="card" style="border:2px solid '+(needLoad?'#d9534f;background:#fff7f7':'#b7e2c4;background:#f3fbf5')+'"><h3 style="margin:0;color:'+(needLoad?'#a11d1d':'#146c2e')+'">'+(needLoad?'⚠ Data load needed – '+(bad.length?bad.length+' of '+calc.length+' revenue line(s) have wrong net values':'')+(bad.length&&(feeCsv||feeNote)?' · ':'')+((feeCsv||feeNote)?'Distributor Fee line has the wrong Rebate %':'')+(ver&&ver.status==='bad'&&!bad.length&&!document.getElementById('ruse').checked?' (tick “use the Rebate Table %” to also get the corrected net values)':''):'✔ Data load not needed – net values on all '+calc.length+' revenue line(s) already match the rebate')+'</h3></div>';
+  h+=XL_BTN('r');
+  h+='<div class="card"><h3>Rebate used</h3><div>Rebate %: <b>'+rebs.map(x=>x+'%').join(', ')+'</b> '+(override!==null&&!isNaN(override)?'<span class="tag t-warn">'+ovSrc+'</span>':(Object.keys(feeBy).length?'<span class="tag t-ok">from Distributor Fee line</span>':''))+'</div>'
+    +'<div class="hint">Net = Gross × (100 − rebate%) ÷ 100, rounded to 2 decimals (half up), applied to Revenue lines only – same formula as the booking line batch.'+(skipped?' '+skipped+' non-revenue line(s) (Distributor Fee / CCR types) skipped.':'')+'</div>'
+    +(anyNoRebate?'<div class="hint" style="color:#a11d1d"><b>No Distributor Fee line with a Rebate % was found for some bookings</b> – rebate treated as 0%. Enter the rebate % in the override box if one should apply.</div>':'')+'</div>';
+  // per line
+  h+='<div class="card"><h3>Calculation by line</h3>';
+  calc.forEach(c=>{
+    h+='<details class="lg" '+(c.bad?'open':'')+'><summary><b>'+esc(c.r['Product_Code__c']||'(line)')+'</b> <span class="idc">'+esc(c.r.Id)+'</span> <span class="idc">rebate '+c.reb+'%</span> '+(c.bad?'<span class="tag t-bad">'+c.items.filter(i=>i.bad).length+' to fix</span> <span class="tag t-bad">DATA LOAD</span>':'<span class="tag t-ok">correct</span>')+'</summary>'
+      +'<table class="cmp"><thead><tr><th>Field</th><th class="num">Gross</th><th class="num">Expected Net</th><th class="num">Current Net</th><th class="num">Diff</th><th></th></tr></thead><tbody>'
+      +c.items.map(i=>'<tr class="r-'+(i.bad?'bad':'ok')+'"><td>'+esc(i.label)+' <span class="muted">('+esc(i.n)+')</span></td><td class="num">'+fmt(i.gross)+'</td><td class="num">'+fmt(i.exp)+'</td><td class="num">'+fmt(i.cur)+'</td><td class="num">'+((i.bad||i.rnd)?fmt(i.cur-i.exp):'')+'</td><td>'+(i.bad?'✖ real difference':i.rnd?'≈ rounding only (±0.01)':'✔')+'</td></tr>').join('')
+      +'</tbody></table></details>';
+  });
+  h+='</div>';
+  // totals
+  const tg=RB_PAIRS.map(([g,n,label])=>{const cs=calc.filter(c=>c.items.some(i=>i.n===n));if(!cs.length)return null;let ex=0,cu=0,gr=0;cs.forEach(c=>{const i=c.items.find(x=>x.n===n);ex+=i.exp;cu+=i.cur;gr+=i.gross});return {label,gr,ex,cu}}).filter(Boolean);
+  h+='<div class="card"><h3>Totals</h3><table><thead><tr><th>Field</th><th class="num">Gross</th><th class="num">Expected Net</th><th class="num">Current Net</th><th class="num">Diff</th></tr></thead><tbody>'
+    +tg.map(t=>{const k=cmpN(t.cu,t.ex);return '<tr class="'+(k==='bad'?'r-bad':'')+'"><td>'+esc(t.label)+'</td><td class="num">'+fmt(t.gr)+'</td><td class="num">'+fmt(t.ex)+'</td><td class="num">'+fmt(t.cu)+'</td><td class="num">'+(k!=='ok'?fmt(t.cu-t.ex)+(k==='rnd'?' ≈ rounding':''):'')+'</td></tr>'}).join('')+'</tbody></table></div>';
+  {const rn=calc.reduce((s,c)=>s+c.items.filter(i=>i.rnd).length,0);if(rn)h+='<div class="card" style="border:2px solid #e0a800;background:#fffbea"><h3 style="margin:0;color:#8a6100">≈ '+rn+' value(s) differ by 0.01 or less – decimal precision / rounding only, NOT a real value difference. Treated as correct; no data load needed for them.</h3></div>'}
+  // data load file
+  if(feeCsv||feeNote){
+    h+='<div class="card"><h3>Data Loader file 1 – Distributor Fee line (Update &rarr; Booking_Line_Item__c) <span class="tag t-bad">DATA LOAD</span></h3>';
+    if(feeCsv)h+='<div class="row"><button class="btn" onclick="rbDownload2()">Download CSV</button><button class="btn sec" onclick="copyText(window._rbcsv2)">Copy CSV</button><span class="muted">'+feeCount+' fee line(s): Rebate__c set to '+ver.expected+'% and fee amounts scaled from the applied '+esc(ver.appliedTxt)+'</span></div><textarea readonly style="margin-top:10px;min-height:70px">'+esc(feeCsv)+'</textarea>';
+    if(feeNote)h+='<div class="hint" style="color:#a11d1d">'+esc(feeNote)+'</div>';
+    h+='<div class="hint">Load this file <b>together with</b> the net-values file below. Fee amounts are scaled proportionally (new ÷ applied rebate) – check them against the fee line on the booking before loading.</div></div>';
+  }
+  h+='<div class="card"><h3>Data Loader file '+((feeCsv||feeNote)?'2 – ':'')+'(Update &rarr; Booking_Line_Item__c) – net values</h3>';
+  if(bad.length){
+    h+='<div class="row"><button class="btn" onclick="rbDownload()">Download CSV</button><button class="btn sec" onclick="copyText(window._rbcsv)">Copy CSV</button><span class="muted">'+bad.length+' line(s), '+fixCols.length+' net field(s) each</span></div>'
+      +'<textarea readonly style="margin-top:10px;min-height:'+Math.min(40+bad.length*18,200)+'px">'+esc(csv)+'</textarea>'
+      +'<div class="hint"><b>Before loading:</b> run as an IT ProdOps / API user (booking line edits are blocked for other users); use <i>Update</i>, map <code>Id</code> + the net columns; take a backup of the current values first. After the load, Booking Renewal Net TCV/ACV roll-ups recalculate from the lines – re-run the compare to confirm.</div>';
+  } else h+='<div class="muted">Nothing to load – net values already match the rebate.</div>';
+  h+='</div>';
+  out.innerHTML=h;
+}
+function dlCsv(name){
+  try{const blob=new Blob([window._csvs[name]],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'_update.csv';document.body.appendChild(a);a.click();a.remove();toast('Downloading…')}
+  catch(e){copyText(window._csvs[name]);toast('Download blocked – CSV copied instead')}
+}
+function rbDownload2(){
+  try{const blob=new Blob([window._rbcsv2],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='distributor_fee_line_rebate_update.csv';document.body.appendChild(a);a.click();a.remove();toast('Downloading…')}
+  catch(e){copyText(window._rbcsv2);toast('Download blocked – CSV copied instead')}
+}
+function rbDownload(){
+  try{
+    const blob=new Blob([window._rbcsv],{type:'text/csv'});const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);a.download='booking_line_net_values_update.csv';document.body.appendChild(a);a.click();a.remove();toast('Downloading…');
+  }catch(e){copyText(window._rbcsv);toast('Download blocked – CSV copied instead')}
+}
+document.getElementById('rgo').onclick=rbQuery;
+document.getElementById('rid').addEventListener('keydown',e=>{if(e.key==='Enter')rbQuery()});
+document.getElementById('rcalc').onclick=rbCalc;
+document.getElementById('rbt').onclick=rbTableQuery;
+document.getElementById('rchk').onclick=rbLookup;
+document.getElementById('rclear').onclick=()=>{['rdata','rpct','rA','rT','rdt','rmsp'].forEach(i=>document.getElementById(i).value='');document.getElementById('rout').innerHTML='';document.getElementById('rchkout').innerHTML='';document.getElementById('rq2').innerHTML=''};
+
+
+/* ---------- DEBOOKING REVIEW ---------- */
+const DB_OPP_FIELDS=`Id, Name, StageName, CloseDate, Amount, Opportunity_Type__c, Opportunity_Sub_Type__c, CCR__c,
+       CCR__r.CCR_Type__c, CCR__r.Amount__c, CCR__r.Customer_Returns_Type__c, CCR__r.Return_Amount_Type__c, CCR__r.Opportunity__c,
+       ACV_Amount__c, New_Expansion_ACV__c, Renewal_Subsumed_ACV__c, New_Expansion_TCV__c, Subsumed_Renewal_TCV__c`;
+function dbStep1(){
+  const t=document.getElementById('dtype').value,id=document.getElementById('did').value.trim().replace(/['"]/g,'');
+  const box=document.getElementById('dq1');if(!id){box.innerHTML='';return}
+  const q=t==='opp'?`SELECT Id, Name, CCR__c, CCR__r.Opportunity__c FROM Opportunity WHERE Id = '${id}'`
+    :t==='bkg'?`SELECT Id, Booking__c, CCR__c, CCR__r.Opportunity__c FROM Booking_Line_Item__c WHERE Booking__c = '${id}' AND CCR__c != null LIMIT 5`
+    :`SELECT Id, Opportunity__c, Booking__c FROM CCR__c WHERE Id = '${id}'`;
+  window._dq1=q;
+  box.innerHTML='<div class="qhead" style="margin-top:10px"><div class="qtitle">Step 1 query</div><button class="btn sm" onclick="copyText(window._dq1)">Copy</button></div><pre>'+esc(q)+'</pre>';
+}
+function dbResolve(){
+  const rows=parseDelim(document.getElementById('ds1').value);const out=document.getElementById('dq2');
+  if(!rows.length){out.innerHTML='<div class="verdict v-warn">Paste the Step 1 result first.</div>';return}
+  const r=rows[0];
+  const ccr=r['CCR__c']||(r['Opportunity__c']!==undefined&&r['CCR__c']===undefined?r['Id']:'');
+  const orig=r['CCR__r.Opportunity__c']||r['Opportunity__c']||'';
+  if(!ccr||!orig){out.innerHTML='<div class="verdict v-bad">Could not find the CCR / original opportunity in that result – is this a debooking?</div>';return}
+  const QS=[
+   ['A','Debooking opportunity',`SELECT ${DB_OPP_FIELDS}\nFROM Opportunity WHERE CCR__c = '${ccr}'`],
+   ['B','Original opportunity',`SELECT ${DB_OPP_FIELDS}\nFROM Opportunity WHERE Id = '${orig}'`],
+   ['C','Booking lines – original and debooking',`SELECT Id, Booking__c, Booking__r.Opportunity__c, Booking__r.RecordType.Name, Type__c, CCR__c, Product_Code__c,
+       OrderProduct__r.Opportunity_Product__c, Product_Quantity__c, Rebate__c, Impacts_Gross_Bookings__c, Impacts_Net_Bookings__c,
+       Total_Price__c, Net_TCV_Amount__c, New_Expansion_TCV__c, Net_New_Expansion_TCV__c,
+       Subsumed_Renewal_TCV__c, Net_Subsumed_Renewal_TCV__c, Gross_Renewal_TCV__c, Net_Renewal_TCV__c,
+       Gross_ACV_Amount__c, Net_ACV_Amount__c, Gross_New_Expansion_ACV__c, Net_New_Expansion_ACV__c,
+       Gross_Subsumed_Renewal_ACV__c, Net_Subsumed_Renewal_ACV__c, Gross_Renewal_ACV__c, Net_Renewal_ACV__c
+FROM Booking_Line_Item__c WHERE Booking__r.Opportunity__r.CCR__c = '${ccr}' OR Booking__r.Opportunity__c = '${orig}'`],
+   ['D','Debooking opportunity lines (LineItem Based only)',`SELECT Id, OpportunityId, Product2.ProductCode, Quantity, UnitPrice, TotalPrice,
+       ACV_Amount__c, New_Expansion_ACV__c, Subsumed_Renewal_Amount__c, Renewal_ACV__c, Renewal_TCV__c,
+       New_Expansion_TCV__c, Subsumed_Renewal_TCV__c
+FROM OpportunityLineItem WHERE Opportunity.CCR__c = '${ccr}'`]];
+  window._dqs=QS.map(q=>q[2]);
+  out.innerHTML='<div class="card"><h3>Step 2 &ndash; Run these queries <span class="muted">(CCR '+esc(ccr)+' · original opportunity '+esc(orig)+')</span></h3><div class="qpair">'
+    +QS.map((q,i)=>'<div class="qcol"><div class="qhead"><div class="qtitle">'+q[0]+' &ndash; '+esc(q[1])+'</div><button class="btn sm" onclick="copyText(window._dqs['+i+'])">Copy</button></div><pre>'+esc(q[2])+'</pre></div>').join('')+'</div></div>';
+  document.getElementById('dpastes').style.display='block';
+}
+function dbReview(){
+  const out=document.getElementById('dout');
+  const A=parseDelim(document.getElementById('dA').value),B=parseDelim(document.getElementById('dB').value),C=parseDelim(document.getElementById('dC').value),D=parseDelim(document.getElementById('dD').value);
+  if(!A.length){out.innerHTML='<div class="verdict v-warn">Paste the debooking opportunity result (A) at least.</div>';return}
+  const a=A[0],o=B[0]||null;
+  const ccrType=a['CCR__r.CCR_Type__c']||'',lineBased=(a['CCR__r.Customer_Returns_Type__c']||'')==='LineItem Based',unpaid=ccrType==='Unpaid Replacement Debooking';
+  const ccrAmt=num(a['CCR__r.Amount__c']),dAmt=num(a['Amount']);
+  const ov=document.getElementById('dpct').value.trim();const override=ov!==''?parseFloat(ov):null;
+  const rows=[];const notes=[];const load={opp:{},bli:[]};
+  const warns=[];
+  const add=(sec,label,exp,act,tol,f,fx)=>{const c=cmpN(exp,act),bad=c==='bad';rows.push({sec,label,f:f||'',fx:fx||'',exp:num(exp),act:num(act),st:bad?'bad':'ok',rnd:c==='rnd'});return bad};
+  const has1=(r,f)=>Object.prototype.hasOwnProperty.call(r,f);
+  // ---- 1. debooking opportunity vs original (amount based)
+  const pct=(o&&num(o.Amount)!==0)?dAmt/num(o.Amount):0;
+  if(!lineBased&&o){
+    const clip=x=>x>0?0:x;
+    const eACV=unpaid?0:num(o.ACV_Amount__c)*pct;
+    const eRen=unpaid?0:clip(pct*num(o.Renewal_Subsumed_ACV__c));
+    const eNew=unpaid?0:clip(pct*num(o.New_Expansion_ACV__c));
+    const eRTCV=clip(pct*num(o.Subsumed_Renewal_TCV__c)),eNTCV=clip(pct*num(o.New_Expansion_TCV__c));
+    const S1='Debooking opportunity vs original × debooked %';
+    const pp=(pct*100).toFixed(4)+'%',O=(k)=>fmt(num(o[k]));
+    if(add(S1,'Amount = Gross TCV Total (= −CCR amount)',-ccrAmt,dAmt,0,'','−(CCR Amount '+fmt(ccrAmt)+') = '+fmt(-ccrAmt)))load.opp.Amount=-ccrAmt;
+    [['ACV_Amount__c','ACV Amount',eACV,unpaid?'Unpaid Replacement Debooking → ACV is set to 0':'Original ACV '+O('ACV_Amount__c')+' × debook % '+pp+'  (debook % = debook Amount '+fmt(dAmt)+' ÷ original Amount '+O('Amount')+')'],
+     ['Renewal_Subsumed_ACV__c','Renewal Subsumed ACV',eRen,unpaid?'Unpaid Replacement → 0':'MIN(0, Original '+O('Renewal_Subsumed_ACV__c')+' × '+pp+')'],
+     ['New_Expansion_ACV__c','New/Expansion ACV',eNew,unpaid?'Unpaid Replacement → 0':'MIN(0, Original '+O('New_Expansion_ACV__c')+' × '+pp+')'],
+     ['Subsumed_Renewal_TCV__c','Subsumed Renewal TCV',eRTCV,'MIN(0, Original '+O('Subsumed_Renewal_TCV__c')+' × '+pp+')'],
+     ['New_Expansion_TCV__c','New/Expansion TCV',eNTCV,'MIN(0, Original '+O('New_Expansion_TCV__c')+' × '+pp+')']]
+      .forEach(([f,l,e,fx])=>{if(add(S1,l,e,a[f],0,'',fx))load.opp[f]=r2(e)});
+    // TCV allocation check (ESD-17267 pattern): total TCV vs buckets
+    const oppAlloc=dAmt-(num(a.New_Expansion_TCV__c)+num(a.Subsumed_Renewal_TCV__c)+(has1(a,'Renewal_TCV__c')?num(a.Renewal_TCV__c):0));
+    if(Math.abs(oppAlloc)>=1)warns.push('Debooking opportunity '+a.Id+': TCV total (Amount) '+fmt(dAmt)+' but New/Expansion TCV '+fmt(num(a.New_Expansion_TCV__c))+' + Subsumed Renewal TCV '+fmt(num(a.Subsumed_Renewal_TCV__c))+(has1(a,'Renewal_TCV__c')?' + Renewal TCV '+fmt(num(a.Renewal_TCV__c)):'')+' leave '+fmt(oppAlloc)+' unallocated. The original opportunity has Subsumed Renewal TCV = '+O('Subsumed_Renewal_TCV__c')+' and New/Expansion TCV = '+O('New_Expansion_TCV__c')+', so the % formula gives 0 for those buckets.');
+    notes.push('Amount-based debooking: debook % = debooking amount ÷ original amount = '+(pct*100).toFixed(4)+'%. '+(unpaid?'Unpaid Replacement: ACV, Renewal ACV and New/Expansion ACV are 0 (TCVs are still prorated).':'ACV = original ACV × %. Renewal/New ACV and the TCVs = original × % and are never positive.'));
+  } else if(!lineBased&&!o) notes.push('Original opportunity (B) not provided – opportunity-level expectation skipped.');
+  notes.push('Debooking type: '+(lineBased?'LineItem Based':'Amount Based')+' · CCR type: '+(ccrType||'—')+' · sub-type on opportunity: '+(a['Opportunity_Sub_Type__c']||'—'));
+  // ---- rebate (from the ORIGINAL booking's Distributor Fee line)
+  let reb=0,rebSrc='none found – 0% assumed';
+  const origFee=C.find(r=>r['Type__c']==='Distributor Fee'&&(r['Booking__r.RecordType.Name']||'')==='Booking'&&(r['Rebate__c']||'')!=='');
+  const anyFee=C.find(r=>r['Type__c']==='Distributor Fee'&&(r['Rebate__c']||'')!=='');
+  if(override!==null&&!isNaN(override)){reb=override;rebSrc='manual override'}
+  else if(origFee){reb=num(origFee['Rebate__c']);rebSrc='original booking Distributor Fee line'}
+  else if(anyFee){reb=num(anyFee['Rebate__c']);rebSrc='a Distributor Fee line'}
+  const nf=(g)=>r2(g*(100-reb)/100);
+  // ---- 2. debooking booking lines
+  const isDebookBkg=r=>(r['Booking__r.RecordType.Name']||'')==='Booking Adjustment'||r['Booking__r.Opportunity__c']===a.Id;
+  const dLines=C.filter(r=>isDebookBkg(r)||(r['CCR__c']&&r['CCR__c']===a['CCR__c']));
+  const GRP=[['New_Expansion_TCV__c','Net_New_Expansion_TCV__c','New/Expansion TCV'],['Subsumed_Renewal_TCV__c','Net_Subsumed_Renewal_TCV__c','Renewal Subsumed TCV'],['Gross_Renewal_TCV__c','Net_Renewal_TCV__c','Renewal TCV'],
+    ['Gross_ACV_Amount__c','Net_ACV_Amount__c','ACV Amount'],['Gross_New_Expansion_ACV__c','Net_New_Expansion_ACV__c','New/Expansion ACV'],['Gross_Subsumed_Renewal_ACV__c','Net_Subsumed_Renewal_ACV__c','Renewal Subsumed ACV'],['Gross_Renewal_ACV__c','Net_Renewal_ACV__c','Renewal ACV']];
+  const oppMap={New_Expansion_TCV__c:'New_Expansion_TCV__c',Subsumed_Renewal_TCV__c:'Subsumed_Renewal_TCV__c',Gross_ACV_Amount__c:'ACV_Amount__c',Gross_New_Expansion_ACV__c:'New_Expansion_ACV__c',Gross_Subsumed_Renewal_ACV__c:'Renewal_Subsumed_ACV__c'};
+  const loadFor=(id)=>{let l=load.bli.find(x=>x.Id===id);if(!l){l={Id:id,upd:{}};load.bli.push(l)}return l.upd};
+  const revLines=dLines.filter(r=>!['Distributor Fee','Partner Referral Fee'].includes(r['Type__c']));
+  const feeLines=dLines.filter(r=>r['Type__c']==='Distributor Fee');
+  const oliById={};D.forEach(x=>oliById[x.Id]=x);
+  const sums={};GRP.forEach(g=>sums[g[0]]=0);
+  revLines.forEach(b=>{
+    const lab='Debooking booking line '+(b['Product_Code__c']||b['Type__c']||'')+' ('+b.Id+')';
+    const u=loadFor(b.Id);
+    if(!lineBased||!b['OrderProduct__r.Opportunity_Product__c']){
+      const NF=(x)=>'× (100 − '+reb+'%) ÷ 100';
+      if(has1(b,'Total_Price__c')&&add(lab,'Gross TCV Total (= −CCR amount)',-ccrAmt,b['Total_Price__c'],0,'Total_Price__c','−(CCR Amount '+fmt(ccrAmt)+') = '+fmt(-ccrAmt)))u.Total_Price__c=r2(-ccrAmt);
+      if(has1(b,'Net_TCV_Amount__c')&&add(lab,'Net TCV Total',nf(dAmt),b['Net_TCV_Amount__c'],0,'Net_TCV_Amount__c','Debooking opp Amount '+fmt(dAmt)+' '+NF()))u.Net_TCV_Amount__c=nf(dAmt);
+      GRP.forEach(([g,n,l])=>{
+        if(!oppMap[g]||!has1(b,g))return;
+        const e=r2(num(a[oppMap[g]]));
+        if(add(lab,'Gross '+l,e,b[g],0,g,'= Debooking opportunity '+oppMap[g]+' ('+fmt(e)+')'))u[g]=e;
+        if(has1(b,n)&&add(lab,'Net '+l,nf(e),b[n],0,n,'Gross '+fmt(e)+' '+NF()))u[n]=nf(e);
+      });
+      const tp=has1(b,'Total_Price__c')?num(b['Total_Price__c']):-ccrAmt;
+      const bs=num(b['New_Expansion_TCV__c'])+num(b['Subsumed_Renewal_TCV__c'])+(has1(b,'Gross_Renewal_TCV__c')?num(b['Gross_Renewal_TCV__c']):0);
+      if(Math.abs(tp-bs)>=1)warns.push(lab+': Gross TCV Total '+fmt(tp)+' but New/Expansion TCV '+fmt(num(b['New_Expansion_TCV__c']))+' + Renewal Subsumed TCV '+fmt(num(b['Subsumed_Renewal_TCV__c']))+(has1(b,'Gross_Renewal_TCV__c')?' + Renewal TCV '+fmt(num(b['Gross_Renewal_TCV__c'])):'')+' = '+fmt(bs)+' → '+fmt(tp-bs)+' of TCV is not allocated to any bucket.');
+    }else{
+      const ol=oliById[b['OrderProduct__r.Opportunity_Product__c']];
+      if(!ol){rows.push({sec:lab,label:'No matching debooking opportunity line (paste D)',exp:0,act:0,st:'bad'});return}
+      const f=num(ol.Quantity)?num(b['Product_Quantity__c'])/num(ol.Quantity):1;
+      const MAP=[['New_Expansion_TCV__c','New_Expansion_TCV__c'],['Subsumed_Renewal_TCV__c','Subsumed_Renewal_TCV__c'],['Gross_Renewal_TCV__c','Renewal_TCV__c'],['Gross_ACV_Amount__c','ACV_Amount__c'],['Gross_New_Expansion_ACV__c','New_Expansion_ACV__c'],['Gross_Subsumed_Renewal_ACV__c','Subsumed_Renewal_Amount__c'],['Gross_Renewal_ACV__c','Renewal_ACV__c']];
+      MAP.forEach(([g,of])=>{
+        if(!has1(b,g)||!has1(ol,of))return;
+        const e=r2(num(ol[of])*f);sums[g]+=e;
+        const gr=GRP.find(x=>x[0]===g);
+        if(add(lab,'Gross '+gr[2]+' (debook opp line × qty factor)',e,b[g],0,g,'Debook opp line '+of+' '+fmt(num(ol[of]))+' × qty factor '+f.toFixed(4)+' (booking qty ÷ opp line qty)'))u[g]=e;
+        if(has1(b,gr[1])&&add(lab,'Net '+gr[2],nf(e),b[gr[1]],0,gr[1],'Gross '+fmt(e)+' × (100 − '+reb+'%) ÷ 100'))u[gr[1]]=nf(e);
+      });
+      if(has1(ol,'TotalPrice')){const e=r2(num(ol.TotalPrice)*f);
+        if(has1(b,'Total_Price__c')&&add(lab,'Gross TCV Total',e,b['Total_Price__c'],0,'Total_Price__c','Debook opp line TotalPrice '+fmt(num(ol.TotalPrice))+' × qty factor '+f.toFixed(4)))u.Total_Price__c=e;
+        if(has1(b,'Net_TCV_Amount__c')&&add(lab,'Net TCV Total',nf(e),b['Net_TCV_Amount__c'],0,'Net_TCV_Amount__c','Gross TCV '+fmt(e)+' × (100 − '+reb+'%) ÷ 100'))u.Net_TCV_Amount__c=nf(e)}
+      {const tp=num(b['Total_Price__c']),bs=num(b['New_Expansion_TCV__c'])+num(b['Subsumed_Renewal_TCV__c'])+num(b['Gross_Renewal_TCV__c']);
+       if(has1(b,'Total_Price__c')&&Math.abs(tp-bs)>=1)warns.push(lab+': Gross TCV Total '+fmt(tp)+' but TCV buckets add to '+fmt(bs)+' → '+fmt(tp-bs)+' not allocated to any bucket.')}
+    }
+    if(!Object.keys(u).length)load.bli=load.bli.filter(x=>x.Id!==b.Id);
+  });
+  // Distributor Fee reversal line on the debooking booking
+  feeLines.filter(r=>isDebookBkg(r)).forEach(b=>{
+    const rb=(b['Rebate__c']||'')!==''?num(b['Rebate__c']):reb;
+    const lab='Debooking Distributor Fee line ('+b.Id+')';const u=loadFor(b.Id);
+    if(!lineBased){
+      if(has1(b,'Total_Price__c')&&add(lab,'Gross TCV Total (= debooked amount × rebate%)',r2(-dAmt*rb/100),b['Total_Price__c'],0,'Total_Price__c','−(debook Amount '+fmt(dAmt)+') × rebate '+rb+'% ÷ 100'))u.Total_Price__c=r2(-dAmt*rb/100);
+      Object.entries(oppMap).forEach(([g,of])=>{if(!has1(b,g))return;const e=r2(num(a[of])*rb*-0.01);const gr=GRP.find(x=>x[0]===g);if(add(lab,'Gross '+gr[2]+' (debook opp × −rebate%)',e,b[g],0,g,'Debooking opp '+of+' '+fmt(num(a[of]))+' × −'+rb+'% ÷ 100'))u[g]=e});
+    }else{
+      GRP.forEach(([g,n,l])=>{if(!has1(b,g))return;const e=r2(sums[g]*rb*-0.01);if(add(lab,'Gross '+l+' (Σ lines × −rebate%)',e,b[g],0,g,'Σ debooking revenue lines '+fmt(sums[g])+' × −'+rb+'% ÷ 100'))u[g]=e});
+    }
+    if(!Object.keys(u).length)load.bli=load.bli.filter(x=>x.Id!==b.Id);
+  });
+  if(!revLines.length)notes.push('No debooking booking line (Type = CCR type) found in C – lines not reviewed (not yet booked, or wrong query result).');
+  notes.push('Rebate % used: '+reb+'% ('+rebSrc+').');
+  // ---- 3. debooking lines (gross) vs debooking opportunity
+  const totR=[];
+  if(revLines.length){
+    [['Gross_ACV_Amount__c','ACV_Amount__c','ACV'],['Gross_New_Expansion_ACV__c','New_Expansion_ACV__c','New/Expansion ACV'],['Gross_Subsumed_Renewal_ACV__c','Renewal_Subsumed_ACV__c','Renewal Subsumed ACV'],['New_Expansion_TCV__c','New_Expansion_TCV__c','New/Expansion TCV'],['Subsumed_Renewal_TCV__c','Subsumed_Renewal_TCV__c','Renewal Subsumed TCV']].forEach(([bf,of,l])=>{
+      if(!has1(revLines[0],bf))return;
+      const sb=revLines.filter(r=>(r['Impacts_Gross_Bookings__c']||'true')==='true').reduce((s,r)=>s+num(r[bf]),0);
+      totR.push({l,opp:num(a[of]),bkg:sb,bad:Math.abs(num(a[of])-sb)>=1}); // sync batch tolerance is 1
+    });
+  }
+  // ---- render
+  const bad=rows.filter(r=>r.st==='bad');const needLoad=bad.length>0;
+  let h='<div class="verdict v-'+(bad.length?'bad':'ok')+'">'+(bad.length?'✖ '+bad.length+' debooking ACV/TCV value(s) do not match the expected calculation':'✔ Debooking ACV/TCV values match the expected calculation')+'</div>';
+  h+=needLoad?'<div class="card" style="border:2px solid #d9534f;background:#fff7f7"><h3 style="color:#a11d1d;margin:0">⚠ Data load needed'+(Object.keys(load.opp).length?' – Opportunity '+esc(a.Id):'')+(load.bli.length?' – '+load.bli.length+' booking line(s)':'')+'</h3></div>':'<div class="card" style="border:2px solid #b7e2c4;background:#f3fbf5"><h3 style="margin:0;color:#146c2e">✔ Data load not needed</h3></div>';
+  h+=XL_BTN('d');
+  h+='<div class="card"><h3>Summary</h3><ul>'+notes.map(n=>'<li>'+esc(n)+'</li>').join('')+'</ul></div>';
+  if(warns.length)h+='<div class="card" style="border:2px solid #e0a800;background:#fffbea"><h3 style="margin:0 0 6px;color:#8a6100">⚠ Business review – TCV not allocated to a bucket</h3><ul>'+warns.map(w=>'<li>'+esc(w)+'</li>').join('')+'</ul><div class="hint">The system formula allocates debooked TCV only in proportion to the ORIGINAL opportunity&#39;s buckets (New/Expansion TCV, Subsumed Renewal TCV). If the original bucket is 0, the debooked bucket is 0 and the total is left unallocated, so the dashboard reconciliation breaks (ESD-17267 pattern). This is not a sync error – confirm with Finance/BizOps which bucket (e.g. Subsumed Renewal TCV) the debooked TCV should be moved to, then correct the opportunity line first and the booking line after.</div></div>';
+  const fxTable=rs=>'<table class="cmp"><thead><tr><th>Field</th><th>Formula (how it is calculated)</th><th class="num">Expected</th><th class="num">Actual</th><th class="num">Diff</th><th></th></tr></thead><tbody>'+rs.map(r=>'<tr class="r-'+r.st+'"><td>'+esc(r.label)+'</td><td style="font-size:12px;color:#444">'+esc(r.fx||'—')+'</td><td class="num">'+fmt(r.exp)+'</td><td class="num">'+fmt(r.act)+'</td><td class="num">'+((r.st==='bad'||r.rnd)?fmt(r.act-r.exp):'')+'</td><td>'+(r.st==='bad'?'✖ real value difference':r.rnd?'≈ rounding only (±0.01)':'✔')+'</td></tr>').join('')+'</tbody></table>';
+  {const rn=rows.filter(r=>r.rnd);if(rn.length)h+='<div class="card" style="border:2px solid #e0a800;background:#fffbea"><h3 style="margin:0 0 6px;color:#8a6100">≈ '+rn.length+' value(s) differ by 0.01 or less – decimal precision / rounding only, NOT a real value difference</h3><div class="hint">Treated as a match; no data load is generated for them. '+rn.slice(0,8).map(r=>esc(r.label)+' (expected '+fmt(r.exp)+', actual '+fmt(r.act)+', diff '+fmt(r.act-r.exp)+')').join('; ')+'</div></div>'}
+  const secs=[...new Set(rows.map(r=>r.sec))];
+  h+='<div class="card"><h3>Expected vs actual</h3>';
+  secs.forEach(sc=>{
+    const rs=rows.filter(r=>r.sec===sc),nb=rs.filter(r=>r.st==='bad').length;
+    const head='<details class="lg" '+(nb?'open':'')+'><summary><b>'+esc(sc)+'</b> '+(nb?'<span class="tag t-bad">'+nb+' mismatch'+(nb>1?'es':'')+'</span> <span class="tag t-bad">DATA LOAD</span>':'<span class="tag t-ok">all '+rs.length+' match</span>')+'</summary>';
+    if(rs.some(r=>r.f)){
+      const byF={};rs.forEach(r=>{if(r.f&&!byF[r.f])byF[r.f]=r});
+      const cell=(label,f)=>{const r=byF[f];if(!r)return '<div class="mc none"><div class="ml">'+label+'</div><div class="mv">—</div><div class="mv">—</div><div class="mi"></div></div>';
+        return '<div class="mc r-'+r.st+'"><div class="ml">'+label+'</div><div class="mv">'+fmt(r.exp)+'</div><div class="mv">'+fmt(r.act)+'</div><div class="mi" title="'+(r.rnd?'Rounding only (diff '+fmt(r.act-r.exp)+')':'')+'">'+(r.rnd?'≈':r.st==='ok'?'✔':'✖')+'</div></div>'};
+      const SEC=[['TCV Metrics',[['Gross TCV Total','Total_Price__c','Net TCV Total','Net_TCV_Amount__c'],['Gross New/Expansion TCV','New_Expansion_TCV__c','Net New/Expansion TCV','Net_New_Expansion_TCV__c'],['Gross Renewal Subsumed TCV','Subsumed_Renewal_TCV__c','Net Renewal Subsumed TCV','Net_Subsumed_Renewal_TCV__c'],['Gross Renewal TCV','Gross_Renewal_TCV__c','Net Renewal TCV','Net_Renewal_TCV__c']]],
+        ['ACV Metrics',[['Gross ACV Total','Gross_ACV_Amount__c','Net ACV Total','Net_ACV_Amount__c'],['Gross New/Expansion ACV','Gross_New_Expansion_ACV__c','Net New/Expansion ACV','Net_New_Expansion_ACV__c'],['Gross Renewal Subsumed ACV','Gross_Subsumed_Renewal_ACV__c','Net Renewal Subsumed ACV','Net_Subsumed_Renewal_ACV__c'],['Gross Renewal ACV','Gross_Renewal_ACV__c','Net Renewal ACV','Net_Renewal_ACV__c']]]];
+      let body='';
+      SEC.forEach(([t,prs])=>{let cs='';prs.forEach(p=>{if(byF[p[1]]||byF[p[3]])cs+=cell(p[0],p[1])+cell(p[2],p[3])});if(cs)body+='<details class="sec" open><summary class="sech">'+t+'</summary><div class="mh2"><span></span><span>Expected</span><span>Actual</span><span></span><span></span><span>Expected</span><span>Actual</span><span></span></div><div class="mgrid">'+cs+'</div></details>'});
+      body+='<details class="sec"><summary class="sech">How each value is calculated (formulas)</summary>'+fxTable(rs)+'</details>';
+      h+=head+body+'</details>';return;
+    }
+    h+=head+fxTable(rs)+'</details>';
+  });
+  h+='</div>';
+  if(totR.length)h+='<div class="card"><h3>Debooking opportunity vs Σ debooking booking lines (gross)</h3><table><thead><tr><th>Bucket</th><th class="num">Opportunity</th><th class="num">Σ Booking lines</th><th></th></tr></thead><tbody>'+totR.map(t=>'<tr class="'+(t.bad?'r-bad':'')+'"><td>'+esc(t.l)+'</td><td class="num">'+fmt(t.opp)+'</td><td class="num">'+fmt(t.bkg)+'</td><td>'+(t.bad?'✖':'✔')+'</td></tr>').join('')+'</tbody></table></div>';
+  window._csvs={};const files=[];
+  window._dbx=()=>{
+    const rowsX=[[{v:needLoad?'DATA LOAD NEEDED':'NO DATA LOAD NEEDED',s:needLoad?5:6},{v:'Debooking ACV/TCV review – '+(a.Id||''),s:7}],[],
+      ['Section','Field','Formula (how it is calculated)','Expected','Actual','Diff','Status','Data load?'].map(c=>({v:c,s:1}))];
+    rows.forEach(r=>{const x=r.st==='bad'?{t:'MISMATCH',s:2}:r.rnd?{t:'Rounding only (±0.01)',s:4}:{t:'Match',s:3};
+      rowsX.push([r.sec,r.label,r.fx||'',Math.round(r.exp*100)/100,r.st==='bad'?{v:Math.round(r.act*100)/100,s:2}:Math.round(r.act*100)/100,(r.st==='bad'||r.rnd)?Math.round((r.act-r.exp)*100)/100:'',{v:x.t,s:x.s},{v:r.st==='bad'?'YES':'no',s:r.st==='bad'?2:3}])});
+    const lm={};
+    if(Object.keys(load.opp).length)lm['Opportunity']=[{Id:a.Id,upd:load.opp}];
+    if(load.bli.length)lm['Booking_Line_Item__c']=load.bli.map(l=>({Id:l.Id,upd:l.upd}));
+    return [{name:'Debooking review',rows:rowsX}].concat(xlLoadSheets(lm));
+  };
+  const toCsv=(recs)=>{const cols=[];recs.forEach(r=>Object.keys(r.upd).forEach(c=>{if(!cols.includes(c))cols.push(c)}));return ['Id'].concat(cols).join(',')+'\n'+recs.map(r=>[r.Id].concat(cols.map(c=>r.upd[c]===undefined?'':Number(r.upd[c]).toFixed(2))).join(',')).join('\n')};
+  if(load.bli.length){window._csvs['Booking_Line_Item__c']=toCsv(load.bli);files.push('Booking_Line_Item__c')}
+  if(Object.keys(load.opp).length){window._csvs['Opportunity']=toCsv([{Id:a.Id,upd:load.opp}]);files.push('Opportunity')}
+  if(files.length){
+    h+='<div class="card"><h3>Data Loader files</h3>'+files.map(f=>'<div style="margin:10px 0 4px"><b>'+f+'</b></div><div class="row"><button class="btn sm" onclick="dlCsv(\''+f+'\')">Download '+f+'.csv</button><button class="btn sm sec" onclick="copyText(window._csvs[\''+f+'\'])">Copy</button></div><textarea readonly style="margin-top:6px;min-height:60px">'+esc(window._csvs[f])+'</textarea>').join('')
+      +'<div class="hint"><b>Before loading:</b> run as an IT ProdOps / API user, back up current values, and use <i>Update</i>. Opportunity ACV/TCV edits on a Closed Won debooking opportunity may need the closed-won validation bypass; booking lines are re-synced from the opportunity by the sync batch, so fix the opportunity first, then the lines.</div></div>';
+  }
+  out.innerHTML=h;
+}
+document.getElementById('dgo').onclick=dbStep1;
+document.getElementById('did').addEventListener('keydown',e=>{if(e.key==='Enter')dbStep1()});
+document.getElementById('dres').onclick=dbResolve;
+document.getElementById('drun').onclick=dbReview;
+
+/* ---------- WIRING ---------- */
+const PASTES=[['O1','Opportunity – header (O1)',true],['O2','Opportunity – lines (O2)',true],['B1','Booking – header (B1)',true],['B2','Booking – lines (B2)',true],['O3','Opportunity – territory (O3)',false],['B3','Booking split – territory (B3)',false]];
+document.getElementById('pastes').innerHTML=PASTES.map(p=>'<div><div class="qtitle" style="margin-bottom:4px">'+p[1]+'</div><textarea id="p_'+p[0]+'" placeholder="Paste CSV / tab-separated result incl. header row"></textarea></div>').join('');
+document.getElementById('go').onclick=genQueries;
+document.getElementById('idin').addEventListener('keydown',e=>{if(e.key==='Enter')genQueries()});
+document.getElementById('run').onclick=()=>{
+  const D={};PASTES.forEach(p=>{try{D[p[0]]=parseDelim(document.getElementById('p_'+p[0]).value)}catch(e){D[p[0]]=[]}});
+  D.B4=[];
+  if(D.O3&&D.O3.length){D.O1=D.O1.length?[Object.assign({},D.O3[0],D.O1[0])]:[D.O3[0]]}
+  render(compare(D));
+};
+document.getElementById('clear').onclick=()=>{PASTES.forEach(p=>document.getElementById('p_'+p[0]).value='');document.getElementById('cout').innerHTML=''};
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));
+  ['q','c','r','d','h'].forEach(k=>document.getElementById('tab-'+k).classList.toggle('hidden',k!==t.dataset.tab));
+});
+</script>
+</body>
+</html>
